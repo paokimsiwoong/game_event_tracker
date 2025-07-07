@@ -2,10 +2,12 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 
 	_ "github.com/lib/pq" // _ "github.com/lib/pq" 는 postgres driver를 사용한다고 알리는 것. main.go 내부에서 직접 코드 작성할 때 쓰이지는 않음
 	"github.com/paokimsiwoong/game_event_tracker/internal/config"
+	"github.com/paokimsiwoong/game_event_tracker/internal/database"
 )
 
 func main() {
@@ -22,4 +24,9 @@ func main() {
 		log.Fatalf("error connecting to db : %v", err)
 	}
 	defer db.Close()
+
+	// sqlc가 생성한 database 패키지 사용
+	dbQueries := database.New(db)
+
+	fmt.Printf("%+v\n", dbQueries)
 }
