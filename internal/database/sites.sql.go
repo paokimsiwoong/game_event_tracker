@@ -54,6 +54,26 @@ func (q *Queries) CreateSite(ctx context.Context, arg CreateSiteParams) (Site, e
 	return i, err
 }
 
+const deleteSiteByName = `-- name: DeleteSiteByName :exec
+DELETE FROM sites
+WHERE name = $1
+`
+
+func (q *Queries) DeleteSiteByName(ctx context.Context, name string) error {
+	_, err := q.db.ExecContext(ctx, deleteSiteByName, name)
+	return err
+}
+
+const deleteSiteByURL = `-- name: DeleteSiteByURL :exec
+DELETE FROM sites
+WHERE url = $1
+`
+
+func (q *Queries) DeleteSiteByURL(ctx context.Context, url string) error {
+	_, err := q.db.ExecContext(ctx, deleteSiteByURL, url)
+	return err
+}
+
 const getSiteByName = `-- name: GetSiteByName :one
 SELECT id, created_at, updated_at, last_fetched_at, name, url FROM sites 
 WHERE name = $1
@@ -139,16 +159,20 @@ func (q *Queries) GetSites(ctx context.Context) ([]GetSitesRow, error) {
 
 const markSiteFetched = `-- name: MarkSiteFetched :exec
 UPDATE sites
-SET updated_at = $1, last_fetched_at = $1
-WHERE id = $2
+SET updated_at = NOW(), last_fetched_at = NOW()
+WHERE id = $1
 `
 
-type MarkSiteFetchedParams struct {
-	UpdatedAt time.Time
-	ID        uuid.UUID
+func (q *Queries) MarkSiteFetched(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, markSiteFetched, id)
+	return err
 }
 
-func (q *Queries) MarkSiteFetched(ctx context.Context, arg MarkSiteFetchedParams) error {
-	_, err := q.db.ExecContext(ctx, markSiteFetched, arg.UpdatedAt, arg.ID)
+const resetSites = `-- name: ResetSites :exec
+DELETE FROM sites
+`
+
+func (q *Queries) ResetSites(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, resetSites)
 	return err
 }

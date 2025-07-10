@@ -25,5 +25,16 @@ ORDER BY sites.updated_at;
 
 -- name: MarkSiteFetched :exec
 UPDATE sites
-SET updated_at = $1, last_fetched_at = $1
-WHERE id = $2;
+SET updated_at = NOW(), last_fetched_at = NOW()
+WHERE id = $1;
+
+-- name: DeleteSiteByName :exec
+DELETE FROM sites
+WHERE name = $1;
+
+-- name: DeleteSiteByURL :exec
+DELETE FROM sites
+WHERE url = $1;
+
+-- name: ResetSites :exec
+DELETE FROM sites;
