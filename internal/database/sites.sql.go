@@ -16,32 +16,23 @@ import (
 const createSite = `-- name: CreateSite :one
 INSERT INTO sites (id, created_at, updated_at, name, url)
 VALUES (
-    $1, 
-    $2,
-    $3,
-    $4,
-    $5
+    gen_random_uuid(), 
+    NOW(),
+    NOW(),
+    $1,
+    $2
 )   
 RETURNING id, created_at, updated_at, last_fetched_at, name, url
 `
 
 type CreateSiteParams struct {
-	ID        uuid.UUID
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Name      string
-	Url       string
+	Name string
+	Url  string
 }
 
 // returning 으로 생성한 유저를 바로 반환하고 있음 (위에 :one으로 생성한 유저 하나만 반환하도록 함)
 func (q *Queries) CreateSite(ctx context.Context, arg CreateSiteParams) (Site, error) {
-	row := q.db.QueryRowContext(ctx, createSite,
-		arg.ID,
-		arg.CreatedAt,
-		arg.UpdatedAt,
-		arg.Name,
-		arg.Url,
-	)
+	row := q.db.QueryRowContext(ctx, createSite, arg.Name, arg.Url)
 	var i Site
 	err := row.Scan(
 		&i.ID,

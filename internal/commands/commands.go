@@ -26,26 +26,19 @@ type Commands struct {
 }
 
 // 새 명령어 handler를 commands 구조체에 저장하는 메소드
-// func (c *commands) register(name string, f func(*state, command) error) error {
-func (c *Commands) register(name string, f func(*State, Command) error) { // @@@ 과제 함수 시그니쳐 잘못 본 것 문제에 맞게 수정
-	// if _, ok := c.commandMap[name]; ok {
-	// 	return fmt.Errorf("command %s has already been registered: ", name)
-	// }
-
+func (c *Commands) Register(name string, f func(*State, Command) error) {
 	c.CommandMap[name] = f
-
-	// return nil
 }
 
 // commands 구조체에서 주어진 cmd를 찾아 실행하는 메소드
-func (c *Commands) run(s *State, cmd Command) error {
+func (c *Commands) Run(s *State, cmd Command) error {
 	f, ok := c.CommandMap[cmd.Name]
 	if !ok {
-		return fmt.Errorf("no such command : %s", cmd.Name)
+		return fmt.Errorf("error no such command: %s", cmd.Name)
 	}
 
 	if err := f(s, cmd); err != nil {
-		return fmt.Errorf("error running command %s : %w", cmd.Name, err)
+		return fmt.Errorf("error running command %s: %w", cmd.Name, err)
 	}
 	return nil
 }
