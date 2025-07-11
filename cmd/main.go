@@ -39,8 +39,9 @@ func main() {
 	}
 
 	//  command 등록
-	cmds.Register("addsite", commands.HandlerAddSite)
 	cmds.Register("sites", commands.HandlerSites)
+	cmds.Register("addsite", commands.HandlerAddSite)
+	cmds.Register("deletesite", commands.HandlerDeleteSite)
 
 	// 유저 명령어 입력 확인
 	if len(os.Args) < 2 {

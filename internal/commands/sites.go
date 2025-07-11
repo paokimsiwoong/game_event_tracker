@@ -18,6 +18,10 @@ func HandlerSites(s *State, cmd Command) error {
 	fmt.Println("--------------------------------------------------")
 	fmt.Println("--------------------------------------------------")
 
+	if len(sites) == 0 {
+		return nil
+	}
+
 	for _, site := range sites {
 		if site.LastFetchedAt.Valid {
 			fmt.Printf(
