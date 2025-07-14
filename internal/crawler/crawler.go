@@ -6,7 +6,9 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"sort"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -32,14 +34,33 @@ type PokeSVResult struct {
 	KindTxt string
 	Body    string
 	StAt    int64
+	Success bool
+}
+
+type PokeSVIntermediateResult struct {
+	Title   string
+	Kind    string
+	KindTxt string
+	StAt    int64
 }
 
 const pokeURL = "https://sv-news.pokemon.co.jp/ko/"
 
 // const pokeURL = "https://sv-news.pokemon.co.jp/ko/json/list.json"
 
+// 포켓몬 스/바 이벤트 일정 crawl 함수
 func PokeCrawl(url string, duration int) ([]PokeSVResult, error) {
-	resp, err := http.Get(url)
+	// 이 함수 안에서 여러번 get 요청을 하므로 http.Client를 생성해 하나만 사용하기
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+	// @@@ 여러 go 루틴에서 사용될 때 동일 인스턴스가 사용되어야 하므로
+	// @@@ 포인터로 생성
+	// // @@@ 값으로 생성하고 &를 써도 되지만,
+	// // @@@ 여러번 사용하다가 실수로 &를 빼먹어 client가 복사되는 것을 원천 방지하기 위해
+	// // @@@ 처음부터 포인터로 생성한다
+
+	resp, err := client.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("error calling http.Get: %w", err)
 	}
@@ -62,15 +83,10 @@ func PokeCrawl(url string, duration int) ([]PokeSVResult, error) {
 	checkPoint := now.AddDate(0, 0, -duration)
 	ts := checkPoint.Unix()
 
-	// 시간순 정렬 확실하게 하기위해 미리 정렬 실행
-	// sort.Slice(pokeSVJSON.Data, func(i, j int) bool {
-	// 	// return pokeSVJSON.Data[i].StAt < pokeSVJSON.Data[j].StAt
-	// 	ith, _ := strconv.ParseInt(pokeSVJSON.Data[i].StAt, 10, 64)
-	// 	jth, _ := strconv.ParseInt(pokeSVJSON.Data[j].StAt, 10, 64)
-	//  @@@ 변환 두번 할 필요 없도록 stAt의 타입이 int 64인 새 struct를 만들어
-	//  @@@ stAt의 타입 변환 후 저장한 것을 가지고 정렬?
-	// 	return ith < jth
-	// })
+	// 여러개의 go 루틴들이 모두 끝날때까지 기다리도록 해주는 sync.WaitGroup 생성
+	var wg sync.WaitGroup
+	// go 루틴들의 결과를 안전하게 받기 위한 채널 생성
+	ch := make(chan PokeSVResult, len(pokeSVJSON.Data))
 
 	for _, data := range pokeSVJSON.Data {
 
@@ -94,26 +110,77 @@ func PokeCrawl(url string, duration int) ([]PokeSVResult, error) {
 		kst := t.Local()
 		log.Printf("data title: %v\nposted at: %v\n", data.Title, kst)
 
-		dataResp, err := http.Get(pokeURL + data.Link)
-		if err != nil {
-			return nil, fmt.Errorf("error calling http.Get data: %w", err)
-		}
-
-		rawBytes, err := io.ReadAll(dataResp.Body)
-		if err != nil {
-			return nil, fmt.Errorf("error calling io.ReadAll: %w", err)
-		}
-
-		result = append(result, PokeSVResult{
+		wg.Add(1)
+		go fetchURL(client, pokeURL+data.Link, ch, &wg, PokeSVIntermediateResult{
 			Title:   data.Title,
 			Kind:    data.Kind,
 			KindTxt: data.KindTxt,
-			Body:    string(rawBytes),
 			StAt:    stAtUnix,
 		})
-
-		dataResp.Body.Close()
 	}
 
+	// wg.Wait()은 wg.Add(1) 로 알고 있는 go 루틴 개수만큼 wg.Done()가 실행될때까지 block
+	wg.Wait()
+	// 데이터가 더 들어오지 않을 ch close
+	close(ch)
+
+	// 닫힌 채널로 for 루프를 돌면 그 채널 안에 들어있는 데이터들을 다 돌고나서 for 루프가 자동 종료된다
+	for r := range ch {
+		result = append(result, r)
+	}
+
+	// 결과 정렬
+
+	// 시간순 정렬 확실하게 하기위해 정렬 실행
+	sort.Slice(result, func(i, j int) bool {
+		// return result[i].StAt < result[j].StAt
+		return result[i].StAt > result[j].StAt
+		// @@@ 최신이 제일 앞에 오도록 변경
+	})
+
 	return result, nil
+}
+
+// 주어진 url에 get 리퀘스트를 하고 그 결과를 채널에 입력하는 함수
+// go 루틴으로 동시에 여러개가 실행되어도 문제 없도록 설계되어 있음
+func fetchURL(client *http.Client, url string, ch chan<- PokeSVResult, wg *sync.WaitGroup, intermediate PokeSVIntermediateResult) {
+	// go 루틴으로 실행된 함수가 종료 되었음을 함수 외부에 알리기 위해
+	// 함수 종료 시 wg.Done() 실행
+	defer wg.Done()
+
+	dataResp, err := client.Get(url)
+	if err != nil {
+		ch <- PokeSVResult{
+			Title:   intermediate.Title,
+			Kind:    intermediate.Kind,
+			KindTxt: intermediate.KindTxt,
+			StAt:    intermediate.StAt,
+			Body:    "Failed to make a GET request",
+			Success: false,
+		}
+		return
+	}
+	defer dataResp.Body.Close()
+
+	rawBytes, err := io.ReadAll(dataResp.Body)
+	if err != nil {
+		ch <- PokeSVResult{
+			Title:   intermediate.Title,
+			Kind:    intermediate.Kind,
+			KindTxt: intermediate.KindTxt,
+			StAt:    intermediate.StAt,
+			Body:    "Failed to read a response",
+			Success: false,
+		}
+		return
+	}
+
+	ch <- PokeSVResult{
+		Title:   intermediate.Title,
+		Kind:    intermediate.Kind,
+		KindTxt: intermediate.KindTxt,
+		StAt:    intermediate.StAt,
+		Body:    string(rawBytes),
+		Success: true,
+	}
 }

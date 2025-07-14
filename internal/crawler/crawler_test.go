@@ -1,6 +1,7 @@
 package crawler
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,6 +11,7 @@ import (
 const pokeURLTest = "https://sv-news.pokemon.co.jp/ko/json/list.json"
 
 func TestPokeCrawl(t *testing.T) {
+	// @@@ html 내용이 테스트 시점에 따라 바뀌므로 다른 테스트 방식 고려 필요 @@@
 	// Test: Good url with 5 days duration
 	result, err := PokeCrawl(pokeURLTest, 5)
 	require.NoError(t, err)
@@ -133,5 +135,13 @@ func TestPokeCrawl(t *testing.T) {
 </html>`,
 		result[2].Body,
 	)
+
+	// Test: temp
+	result, err = PokeCrawl(pokeURLTest, 20)
+	for _, r := range result {
+		fmt.Println(r.Title)
+		fmt.Println(r.StAt)
+	}
+	require.Error(t, err)
 
 }
