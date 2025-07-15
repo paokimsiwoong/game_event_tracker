@@ -88,6 +88,11 @@ func PokeCrawl(url string, duration int) ([]PokeSVResult, error) {
 	// go 루틴들의 결과를 안전하게 받기 위한 채널 생성
 	ch := make(chan PokeSVResult, len(pokeSVJSON.Data))
 
+	// 너무 많은 goroutine이 동시에 실행되면 시스템 리소스가 부족해지거나
+	// 리퀘스트를 받는 서버(API 등)에 동시에 리퀘스트 가능한 수가 제한되어 있거나 할 수 있음.
+	// 이럴 때는 세마포어 패턴(버퍼 채널로 동시 실행 개수 제한)을 활용
+	sem := make(chan struct{}, 24) // 동시에 최대 24개만 실행
+
 	for _, data := range pokeSVJSON.Data {
 
 		stAtUnix, err := strconv.ParseInt(data.StAt, 10, 64)
@@ -111,7 +116,7 @@ func PokeCrawl(url string, duration int) ([]PokeSVResult, error) {
 		log.Printf("data title: %v\nposted at: %v\n", data.Title, kst)
 
 		wg.Add(1)
-		go fetchURL(client, pokeURL+data.Link, ch, &wg, PokeSVIntermediateResult{
+		go fetchURL(client, pokeURL+data.Link, ch, &wg, sem, PokeSVIntermediateResult{
 			Title:   data.Title,
 			Kind:    data.Kind,
 			KindTxt: data.KindTxt,
@@ -143,10 +148,19 @@ func PokeCrawl(url string, duration int) ([]PokeSVResult, error) {
 
 // 주어진 url에 get 리퀘스트를 하고 그 결과를 채널에 입력하는 함수
 // go 루틴으로 동시에 여러개가 실행되어도 문제 없도록 설계되어 있음
-func fetchURL(client *http.Client, url string, ch chan<- PokeSVResult, wg *sync.WaitGroup, intermediate PokeSVIntermediateResult) {
+func fetchURL(client *http.Client, url string, ch chan<- PokeSVResult, wg *sync.WaitGroup, sem chan struct{}, intermediate PokeSVIntermediateResult) {
 	// go 루틴으로 실행된 함수가 종료 되었음을 함수 외부에 알리기 위해
 	// 함수 종료 시 wg.Done() 실행
 	defer wg.Done()
+
+	// 세마포어 획득
+	sem <- struct{}{}
+	// @@@ sem 채널에 입력 시도 => 채널 버퍼가 꽉차있으면 여기서 블락되고 버퍼가 비워질 때까지 기다린다
+
+	// 세마포어 반환을 defer
+	defer func() { <-sem }()
+	// @@@ 함수가 종료되면서 sem 채널안의 버퍼 한칸을 비운다
+	// @@@ => 블락되어 있던 다른 go 루틴에서 sem <- struct{}{} 실행 가능해져 블락이 풀린다
 
 	dataResp, err := client.Get(url)
 	if err != nil {

@@ -137,7 +137,7 @@ func TestPokeCrawl(t *testing.T) {
 	)
 
 	// Test: temp
-	result, err = PokeCrawl(pokeURLTest, 20)
+	result, err = PokeCrawl(pokeURLTest, 100)
 	for _, r := range result {
 		fmt.Println(r.Title)
 		fmt.Println(r.StAt)
