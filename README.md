@@ -9,6 +9,11 @@ game-event-calendar/
 ├── cmd/
 │   └── main.go            // 엔트리 포인트
 ├── internal/
+│   ├── commands/          // CLI 명령어 기능
+│   │   ├── commands.go
+│   │   ├── addsite.go
+│   │   ├── deletesite.go
+│   │   └── sites.go
 │   ├── crawler/           // 웹 크롤러(공지 긁어오기)
 │   │   └── crawler.go
 │   ├── parser/            // 일정 정보 파싱
