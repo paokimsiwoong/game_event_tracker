@@ -32,5 +32,30 @@ func PokeParse(input []crawler.PokeSVResult) ([]PokeSVParsedResult, error) {
 	// | 6       | 기타 소식       | // @@@ 기타 소식에 【예고】검은 레쿠쟈 강림! 특별한 이벤트 테라 레이드배틀과 이벤트 대량발생도 개최! 와 같이 여러 이벤트 공지가 합쳐진 경우도 있음
 	// | 8       | 대량발생        |
 
-	return nil, nil
+	// 결과 담을 슬라이스 선언
+	var output []PokeSVParsedResult
+
+	// // 문자열 매칭에 사용할 정규표현식 패턴 컴파일
+	// re, err := regexp.Compile("<h1>.*기간.*?<h1>")
+	// if err != nil {
+	// 	return nil, fmt.Errorf("error compiling regexp: %w", err)
+	// }
+
+	// for _, r := range input {
+	// 	if r.Kind == "2" || r.Kind == "3" || r.Kind == "4" {
+	// 		continue
+	// 	}
+
+	// 	match := re.FindString(r.Body)
+	// 	// match 못찾았을 경우 예외 처리
+	// 	if match == "" {
+	// 		continue
+	// 	}
+
+	// 	// <h1>.*기간.*<\h1> 뒤의 시간 찾기
+	// 	split := strings.Split(match, "<\\h1>")
+
+	// }
+
+	return output, nil
 }
