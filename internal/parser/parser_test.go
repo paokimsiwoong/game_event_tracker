@@ -2,6 +2,7 @@ package parser
 
 import (
 	"testing"
+	"time"
 
 	"github.com/paokimsiwoong/game_event_tracker/internal/crawler"
 	"github.com/stretchr/testify/assert"
@@ -260,4 +261,8 @@ func TestPokeParse(t *testing.T) {
 	result, err := PokeParse(input)
 	require.NoError(t, err)
 	assert.Equal(t, 3, len(result))
+
+	assert.Equal(t, "1", result[0].KindTxt)
+	loc := time.FixedZone("KST", 9*60*60)
+	assert.Equal(t, time.Date(2025, time.July, 11, 9, 0, 0, 0, loc), result[0].StartsAt[0])
 }
