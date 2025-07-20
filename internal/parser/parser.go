@@ -1,6 +1,10 @@
 package parser
 
 import (
+	"fmt"
+	"regexp"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/paokimsiwoong/game_event_tracker/internal/crawler"
@@ -35,27 +39,116 @@ func PokeParse(input []crawler.PokeSVResult) ([]PokeSVParsedResult, error) {
 	// 결과 담을 슬라이스 선언
 	var output []PokeSVParsedResult
 
-	// // 문자열 매칭에 사용할 정규표현식 패턴 컴파일
-	// re, err := regexp.Compile("<h1>.*기간.*?<h1>")
-	// if err != nil {
-	// 	return nil, fmt.Errorf("error compiling regexp: %w", err)
-	// }
+	// 문자열 매칭에 사용할 정규표현식 패턴 컴파일
+	re, err := regexp.Compile("<h1>.*기간.*?<h1>")
+	if err != nil {
+		return nil, fmt.Errorf("error compiling regexp: %w", err)
+	}
+	// ex: 2025년 7월 11일(금) 9:00~7월 14일(월) 8:59 과 같은 문자열 찾기
+	rere, err := regexp.Compile(`\d{4}년\s*\d{1,2}월\s*\d{1,2}일.*?\d{1,2}:\d{2}~.*?<br />`)
+	if err != nil {
+		return nil, fmt.Errorf("error compiling regexp: %w", err)
+	}
 
-	// for _, r := range input {
-	// 	if r.Kind == "2" || r.Kind == "3" || r.Kind == "4" {
-	// 		continue
-	// 	}
+	// 2025년 7월 11일(금) 9:00 과 같은 형태의 문자열에서 숫자 추출에 사용
+	rerere, err := regexp.Compile(`(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일.*?(\d{1,2}):(\d{2})`)
+	if err != nil {
+		return nil, fmt.Errorf("error compiling regexp: %w", err)
+	}
+	// ~ 뒤의 7월 14일(월) 8:59 과 같이 년도 표시가 없는 문자열에서 숫자 추출에 사용
+	rererere, err := regexp.Compile(`(\d{1,2})월\s*(\d{1,2})일.*?(\d{1,2}):(\d{2})`)
+	if err != nil {
+		return nil, fmt.Errorf("error compiling regexp: %w", err)
+	}
 
-	// 	match := re.FindString(r.Body)
-	// 	// match 못찾았을 경우 예외 처리
-	// 	if match == "" {
-	// 		continue
-	// 	}
+	// time.Date에 쓰일 KST 시간대 설정
+	loc := time.FixedZone("KST", 9*60*60)
 
-	// 	// <h1>.*기간.*<\h1> 뒤의 시간 찾기
-	// 	split := strings.Split(match, "<\\h1>")
+	for _, r := range input {
+		if r.Kind == "2" || r.Kind == "3" || r.Kind == "4" {
+			continue
+		}
 
-	// }
+		match := re.FindString(r.Body)
+		// match 못찾았을 경우 예외 처리
+		if match == "" {
+			continue
+		}
+
+		// log.Printf("re match: %s", match)
+
+		o := PokeSVParsedResult{
+			Title:    r.Title,
+			Kind:     r.Kind,
+			KindTxt:  r.KindTxt,
+			Body:     r.Body,
+			PostedAt: r.StAt,
+		}
+
+		// <h1>.*기간.*<\h1> 뒤의 시간 찾기
+		// split := strings.Split(match, "</h1>")
+		// @@@ rere로 시간 추출하므로 굳이 split 필요 없음
+
+		// log.Printf("split 0: %s", split[0])
+
+		// ex: 2025년 7월 11일(금) 9:00~7월 14일(월) 8:59 과 같은 형태의 문자열 찾기
+		timeMatches := rere.FindAllString(match, -1)
+
+		for _, m := range timeMatches {
+			split := strings.Split(m, "~")
+
+			// 2025년 7월 11일(금) 9:00 과 같은 형태의 문자열에서 숫자 추출
+			start := rerere.FindStringSubmatch(split[0])
+			if len(start) < 6 {
+				// FindStringSubmatch의 결과의 0번 인덱스는 매칭되는 문자열 전체가 저장되어 있고
+				// 1번 인덱스부터 subgroup들이 저장되어 있다
+				// // `(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일.*?(\d{1,2}):(\d{2})`는
+				// // 5개의 subgroup이 있으므로 매칭결과의 길이는 6(매칭된 전체문자열, subgroup 5개)이어야 한다
+				fmt.Println("시간 포맷 불일치")
+				continue
+			}
+			year, _ := strconv.Atoi(start[1])
+			month, _ := strconv.Atoi(start[2])
+			day, _ := strconv.Atoi(start[3])
+			hour, _ := strconv.Atoi(start[4])
+			min, _ := strconv.Atoi(start[5])
+
+			t := time.Date(year, time.Month(month), day, hour, min, 0, 0, loc)
+
+			o.StartsAt = append(o.StartsAt, t)
+
+			end := rerere.FindStringSubmatch(split[1])
+			if len(end) < 6 {
+				// 연말에서 연초에 걸치는 이벤트가 아닌 경우
+				// 이벤트 종료일시에는 년도가 생략되므로
+				// 대부분의 이벤트는 len(end) < 6 조건이 참
+
+				// 7월 14일(월) 8:59 과 같이 년도 표시가 없는 문자열에서 숫자 추출
+				end = rererere.FindStringSubmatch(split[1])
+				if len(end) < 5 {
+					// 이벤트 시작 후 상시 진행 이벤트라서 종료 일시가 없는 경우
+					continue
+				}
+
+				month, _ = strconv.Atoi(end[1])
+				day, _ = strconv.Atoi(end[2])
+				hour, _ = strconv.Atoi(end[3])
+				min, _ = strconv.Atoi(end[4])
+			} else {
+				year, _ = strconv.Atoi(end[1])
+				month, _ = strconv.Atoi(end[2])
+				day, _ = strconv.Atoi(end[3])
+				hour, _ = strconv.Atoi(end[4])
+				min, _ = strconv.Atoi(end[5])
+			}
+
+			t = time.Date(year, time.Month(month), day, hour, min, 0, 0, loc)
+
+			o.EndsAt = append(o.EndsAt, t)
+		}
+
+		output = append(output, o)
+	}
 
 	return output, nil
 }

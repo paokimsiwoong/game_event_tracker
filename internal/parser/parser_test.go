@@ -10,7 +10,8 @@ import (
 )
 
 func TestPokeParse(t *testing.T) {
-	// Test: Good result with 4 elements
+	// Test: Good result
+	loc := time.FixedZone("KST", 9*60*60)
 	input := []crawler.PokeSVResult{
 		{
 			Title:   "검은 결정 테라 레이드배틀에 최강의 짜랑고우거가 출현 중!",
@@ -256,13 +257,90 @@ func TestPokeParse(t *testing.T) {
 			StAt:    1751342400,
 			Success: true,
 		},
+		{
+			Title:   "검은 레쿠쟈 강림!",
+			Kind:    "1",
+			KindTxt: "테라 레이드배틀",
+			Body: `<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="nofollow">
+  <meta name="focus-ring-visibility" content="hidden">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="../../resources/css/news2.css">
+  <link rel="stylesheet" href="../../resources/css/news-web2.css">
+  <link rel="shortcut icon" href="../../resources/image/Favicon_SVNews.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="../../resources/image/Favicon_SVNews.png">
+  <title>검은 레쿠쟈 강림!</title>
+  
+  <script src='../../resources/js/jquery-3.2.1.min.js'></script>
+  <script src="../../resources/js/news-web3.js"></script>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-SNKH7X9LBK"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-SNKH7X9LBK');
+  </script>
+</head>
+<body>
+<article class="main-contents">
+  <div class="content-wrapper">
+    <div class="notice">
+      <div class="type">테라 레이드배틀</div>
+      <div class="content-box">
+        <div class="content-preview">
+          <div class="title">검은 레쿠쟈 강림!</div>
+          <div class="date-text" data-date="1734652800"></div>
+          <div class="image-wrapper">
+            <img src="banner/8_1728467685_39331730785407.jpg">
+          </div>
+          <div class="text-wrapper">
+            <div class="main-text">
+              <b>색이 다른 전설의 포켓몬 「레쿠쟈」가 이벤트 테라 레이드배틀에 등장!</b><br />2025년 1월 6일(월) 8:59까지, 색이 다른 레쿠쟈(드래곤 테라스탈타입)가 ★5 테라 레이드배틀 결정에서 출현 중!<br />본 이벤트에서 출현하는 색이 다른 레쿠쟈는 일반적인 플레이로는 만날 수 없습니다.<br />이번 기회에 도전해서 모험 동료로 만들어 보시기 바랍니다!<br /><h4>※본 이벤트에서 출현하는 색이 다른 레쿠쟈는 하나의 저장 데이터에서 1마리만 잡을 수 있습니다. 잡은 뒤에도 기간 안에 검은 결정 테라 레이드배틀에 참가하면, 보상을 받을 수 있습니다.<br />※본 이벤트에서 출현하는 색이 다른 레쿠쟈는 경우에 따라, 추후 이벤트에서 다시 출현하거나 다른 방식으로 만날 수 있습니다.</h4> <br /><h1>기간</h1>2024년 12월 20일(금) 9:00~2025년 1월 6일(월) 8:59<br /><br /><h1>출현 포켓몬</h1>★5: 색이 다른 레쿠쟈<br /> <br />또한, ★5의 테라 레이드배틀 결정에서 해피너스를 만나기 쉬워진다고 합니다!<br />출현하는 해피너스는 다양한 테라스탈타입을 가지고 있습니다.<br />승리하면 <b>다양한 타입의 테라피스</b>와 <b>경험사탕</b>을 평소보다<b>많이 획득할 수 있습니다!</b><br /><br /><h1>이벤트 테라 레이드배틀이란?</h1>이벤트 테라 레이드배틀은 시기별로 출현하는 포켓몬이 바뀝니다.<br />좀처럼 보기 어려운 테라스탈타입의 포켓몬을 만날 수도 있다고 합니다.<br />포켓포털 등의 정보를 확인해서 원하는 포켓몬을 찾았다면 도전해 보시기 바랍니다.<br /> <br /><h1>이벤트 테라 레이드배틀에 도전 시 주의사항</h1>・이벤트 테라 레이드배틀을 플레이하려면 아래 방법으로 최신 정보를 받아야 합니다.<br /><h3><b>「포켓포털」→「이상한 소포」→「포켓포털 뉴스를 받는다」</b><br />※Nintendo Switch Online(유료) 가입은 필요하지 않습니다.</h3>・인터넷 통신을 이용해 다른 트레이너와 테라 레이드배틀을 플레이하려면 Nintendo Switch Online(유료)에 가입해야 합니다.<br />・★5 테라 레이드배틀에 도전하려면 엔딩까지 진행해야 합니다. 단, 멀티 플레이 중인 트레이너의 테라 레이드배틀에 참가하거나, 암호를 통해 지인의 테라 레이드배틀에 참가하는 경우, 엔딩까지 진행하지 않은 트레이너도 ★5 테라 레이드배틀에 참가할 수 있습니다.<br />・이벤트 테라 레이드배틀은 팔데아지방에서만 발생합니다.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      ©2022 Pokémon.
+      <br>
+      ©1995-2022 Nintendo/Creatures Inc. /GAME FREAK inc.
+    </div>
+  </div>
+</article>
+</body>
+</html>`,
+			StAt:    1734652800,
+			Success: true,
+		},
 	}
 
 	result, err := PokeParse(input)
 	require.NoError(t, err)
-	assert.Equal(t, 3, len(result))
+	assert.Equal(t, 4, len(result))
 
-	assert.Equal(t, "1", result[0].KindTxt)
-	loc := time.FixedZone("KST", 9*60*60)
+	// 첫번쨰 테라레이드
+	assert.Equal(t, "1", result[0].Kind)
 	assert.Equal(t, time.Date(2025, time.July, 11, 9, 0, 0, 0, loc), result[0].StartsAt[0])
+	assert.Equal(t, time.Date(2025, time.July, 18, 9, 0, 0, 0, loc), result[0].StartsAt[1])
+	assert.Equal(t, time.Date(2025, time.July, 14, 8, 59, 0, 0, loc), result[0].EndsAt[0])
+	assert.Equal(t, time.Date(2025, time.July, 21, 8, 59, 0, 0, loc), result[0].EndsAt[1])
+
+	// 이상한 소포
+	assert.Equal(t, "5", result[2].Kind)
+	assert.Equal(t, 1, len(result[2].StartsAt))
+	assert.Equal(t, 0, len(result[2].EndsAt))
+	assert.Equal(t, time.Date(2025, time.February, 27, 23, 0, 0, 0, loc), result[2].StartsAt[0])
+
+	// 연말~연초인 이벤트
+	assert.Equal(t, "1", result[3].Kind) // @@@ 랭크배틀은 제외되므로 검은 레쿠쟈 인덱스는 4가 아니라 3
+	assert.Equal(t, 1, len(result[3].StartsAt))
+	assert.Equal(t, 1, len(result[3].EndsAt))
+	assert.Equal(t, time.Date(2024, time.December, 20, 9, 0, 0, 0, loc), result[3].StartsAt[0])
+	assert.Equal(t, time.Date(2025, time.January, 6, 8, 59, 0, 0, loc), result[3].EndsAt[0])
 }
