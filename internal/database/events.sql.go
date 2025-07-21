@@ -8,6 +8,7 @@ package database
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -171,60 +172,6 @@ func (q *Queries) GetEventByID(ctx context.Context, id uuid.UUID) (Event, error)
 	return i, err
 }
 
-const getEventByName = `-- name: GetEventByName :one
-SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, site_id FROM events
-WHERE name = $1
-`
-
-func (q *Queries) GetEventByName(ctx context.Context, name string) (Event, error) {
-	row := q.db.QueryRowContext(ctx, getEventByName, name)
-	var i Event
-	err := row.Scan(
-		&i.ID,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.Name,
-		&i.Tag,
-		&i.TagText,
-		&i.PostedAt,
-		&i.StartsAt,
-		&i.EndsAt,
-		&i.Body,
-		&i.SiteID,
-	)
-	return i, err
-}
-
-const getEventByNameAndPostedAtAndSiteID = `-- name: GetEventByNameAndPostedAtAndSiteID :one
-SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, site_id FROM events
-WHERE name = $1 AND posted_at = $2 AND site_id = $3
-`
-
-type GetEventByNameAndPostedAtAndSiteIDParams struct {
-	Name     string
-	PostedAt sql.NullTime
-	SiteID   uuid.UUID
-}
-
-func (q *Queries) GetEventByNameAndPostedAtAndSiteID(ctx context.Context, arg GetEventByNameAndPostedAtAndSiteIDParams) (Event, error) {
-	row := q.db.QueryRowContext(ctx, getEventByNameAndPostedAtAndSiteID, arg.Name, arg.PostedAt, arg.SiteID)
-	var i Event
-	err := row.Scan(
-		&i.ID,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.Name,
-		&i.Tag,
-		&i.TagText,
-		&i.PostedAt,
-		&i.StartsAt,
-		&i.EndsAt,
-		&i.Body,
-		&i.SiteID,
-	)
-	return i, err
-}
-
 const getEvents = `-- name: GetEvents :many
 SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, site_id FROM events
 ORDER BY created_at
@@ -232,6 +179,154 @@ ORDER BY created_at
 
 func (q *Queries) GetEvents(ctx context.Context) ([]Event, error) {
 	rows, err := q.db.QueryContext(ctx, getEvents)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Event
+	for rows.Next() {
+		var i Event
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Name,
+			&i.Tag,
+			&i.TagText,
+			&i.PostedAt,
+			&i.StartsAt,
+			&i.EndsAt,
+			&i.Body,
+			&i.SiteID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getEventsAndSites = `-- name: GetEventsAndSites :many
+SELECT events.id, events.created_at, events.updated_at, events.name, events.tag, events.tag_text, events.posted_at, events.starts_at, events.ends_at, events.body, events.site_id, sites.name AS site_name, sites.url AS site_url FROM events
+INNER JOIN sites
+ON events.site_id = sites.id
+ORDER BY events.posted_at DESC, events.starts_at DESC
+`
+
+type GetEventsAndSitesRow struct {
+	ID        uuid.UUID
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Name      string
+	Tag       int32
+	TagText   string
+	PostedAt  sql.NullTime
+	StartsAt  sql.NullTime
+	EndsAt    sql.NullTime
+	Body      string
+	SiteID    uuid.UUID
+	SiteName  string
+	SiteUrl   string
+}
+
+func (q *Queries) GetEventsAndSites(ctx context.Context) ([]GetEventsAndSitesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getEventsAndSites)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetEventsAndSitesRow
+	for rows.Next() {
+		var i GetEventsAndSitesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Name,
+			&i.Tag,
+			&i.TagText,
+			&i.PostedAt,
+			&i.StartsAt,
+			&i.EndsAt,
+			&i.Body,
+			&i.SiteID,
+			&i.SiteName,
+			&i.SiteUrl,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getEventsByName = `-- name: GetEventsByName :many
+SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, site_id FROM events
+WHERE name = $1
+ORDER BY created_at
+`
+
+func (q *Queries) GetEventsByName(ctx context.Context, name string) ([]Event, error) {
+	rows, err := q.db.QueryContext(ctx, getEventsByName, name)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Event
+	for rows.Next() {
+		var i Event
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Name,
+			&i.Tag,
+			&i.TagText,
+			&i.PostedAt,
+			&i.StartsAt,
+			&i.EndsAt,
+			&i.Body,
+			&i.SiteID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getEventsByNameAndPostedAtAndSiteID = `-- name: GetEventsByNameAndPostedAtAndSiteID :many
+SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, site_id FROM events
+WHERE name = $1 AND posted_at = $2 AND site_id = $3
+ORDER BY created_at
+`
+
+type GetEventsByNameAndPostedAtAndSiteIDParams struct {
+	Name     string
+	PostedAt sql.NullTime
+	SiteID   uuid.UUID
+}
+
+func (q *Queries) GetEventsByNameAndPostedAtAndSiteID(ctx context.Context, arg GetEventsByNameAndPostedAtAndSiteIDParams) ([]Event, error) {
+	rows, err := q.db.QueryContext(ctx, getEventsByNameAndPostedAtAndSiteID, arg.Name, arg.PostedAt, arg.SiteID)
 	if err != nil {
 		return nil, err
 	}

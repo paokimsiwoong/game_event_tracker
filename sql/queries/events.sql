@@ -33,17 +33,25 @@ RETURNING *;
 SELECT * FROM events
 ORDER BY created_at;
 
+-- name: GetEventsAndSites :many
+SELECT events.*, sites.name AS site_name, sites.url AS site_url FROM events
+INNER JOIN sites
+ON events.site_id = sites.id
+ORDER BY events.posted_at DESC, events.starts_at DESC;
+
 -- name: GetEventByID :one
 SELECT * FROM events
 WHERE id = $1;
 
--- name: GetEventByName :one
+-- name: GetEventsByName :many
 SELECT * FROM events
-WHERE name = $1;
+WHERE name = $1
+ORDER BY created_at;
 
--- name: GetEventByNameAndPostedAtAndSiteID :one
+-- name: GetEventsByNameAndPostedAtAndSiteID :many
 SELECT * FROM events
-WHERE name = $1 AND posted_at = $2 AND site_id = $3;
+WHERE name = $1 AND posted_at = $2 AND site_id = $3
+ORDER BY created_at;
 
 -- name: GetEventsBySiteID :many
 SELECT * FROM events

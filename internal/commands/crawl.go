@@ -14,6 +14,8 @@ import (
 	"github.com/paokimsiwoong/game_event_tracker/internal/parser"
 )
 
+// @@@ TODO: 동일 이벤트가 여러번 공지되는 경우 events table에 여러번 등록되는 문제
+// // @@@ ==> calendar 등록시 걸러내는 방식 vs 여기서 걸러내는 방식?
 func HandlerCrawl(s *State, cmd Command) error {
 	// args의 길이가 2이 아니면 crawl <n, name, u, url> <n이면 이름, u면 url> 형태가 아니므로 에러
 	if len(cmd.Args) != 3 {
@@ -57,40 +59,64 @@ func HandlerCrawl(s *State, cmd Command) error {
 	var count int
 
 	for _, p := range parsed {
-		if _, err := s.PtrDB.GetEventByNameAndPostedAtAndSiteID(context.Background(), database.GetEventByNameAndPostedAtAndSiteIDParams{
+		if es, err := s.PtrDB.GetEventsByNameAndPostedAtAndSiteID(context.Background(), database.GetEventsByNameAndPostedAtAndSiteIDParams{
 			Name: p.Title,
 			PostedAt: sql.NullTime{
 				Time:  p.PostedAt,
 				Valid: true,
 			},
 			SiteID: site.ID,
-		}); err == nil { // 기존에 등록된 이벤트라 get하는데 문제없어서 err == nil 이면
+		}); err == nil && len(es) != 0 { // 기존에 등록된 이벤트일 경우
 			log.Printf("Event %s posted at %v has already been registered\n", p.Title, p.PostedAt)
 			continue
 		}
 
-		count += 1
-
 		// @@@ p.StartsAt이 여러개 들어있는 경우 처리해야함
-		s.PtrDB.CreateEvent(context.Background(), database.CreateEventParams{
-			Name:    p.Title,
-			Tag:     int32(p.Kind),
-			TagText: p.KindTxt,
-			PostedAt: sql.NullTime{
-				Time:  p.PostedAt,
-				Valid: true,
-			},
-			StartsAt: sql.NullTime{
-				Time:  p.StartsAt[0],
-				Valid: true,
-			},
-			EndsAt: sql.NullTime{
-				Time:  p.EndsAt[0], // @@@ 종료시점 없는 경우 처리해야함
-				Valid: true,
-			},
-			Body:   p.Body,
-			SiteID: site.ID,
-		})
+		for i := 0; i < len(p.StartsAt); i++ {
+			count += 1
+
+			if i < len(p.EndsAt) {
+				s.PtrDB.CreateEvent(context.Background(), database.CreateEventParams{
+					Name:    p.Title,
+					Tag:     int32(p.Kind),
+					TagText: p.KindTxt,
+					PostedAt: sql.NullTime{
+						Time:  p.PostedAt,
+						Valid: true,
+					},
+					StartsAt: sql.NullTime{
+						Time:  p.StartsAt[i],
+						Valid: true,
+					},
+					EndsAt: sql.NullTime{
+						Time:  p.EndsAt[i],
+						Valid: true,
+					},
+					Body:   p.Body,
+					SiteID: site.ID,
+				})
+			} else { // @@@ 종료시점 없는 경우 처리해야함
+				s.PtrDB.CreateEvent(context.Background(), database.CreateEventParams{
+					Name:    p.Title,
+					Tag:     int32(p.Kind),
+					TagText: p.KindTxt,
+					PostedAt: sql.NullTime{
+						Time:  p.PostedAt,
+						Valid: true,
+					},
+					StartsAt: sql.NullTime{
+						Time:  p.StartsAt[i],
+						Valid: true,
+					},
+					EndsAt: sql.NullTime{
+						Valid: false,
+					},
+					Body:   p.Body,
+					SiteID: site.ID,
+				})
+			}
+
+		}
 
 	}
 
