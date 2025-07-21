@@ -13,7 +13,7 @@ import (
 )
 
 const createEvent = `-- name: CreateEvent :one
-INSERT INTO events (id, created_at, updated_at, name, tag, body, site_id)
+INSERT INTO events (id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, site_id)
 VALUES (
     gen_random_uuid(),
     NOW(),
@@ -21,22 +21,34 @@ VALUES (
     $1,
     $2,
     $3,
-    $4
+    $4,
+    $5,
+    $6,
+    $7,
+    $8
 )
-RETURNING id, created_at, updated_at, name, tag, starts_at, ends_at, body, site_id
+RETURNING id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, site_id
 `
 
 type CreateEventParams struct {
-	Name   string
-	Tag    string
-	Body   string
-	SiteID uuid.UUID
+	Name     string
+	Tag      int32
+	TagText  string
+	PostedAt sql.NullTime
+	StartsAt sql.NullTime
+	EndsAt   sql.NullTime
+	Body     string
+	SiteID   uuid.UUID
 }
 
 func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (Event, error) {
 	row := q.db.QueryRowContext(ctx, createEvent,
 		arg.Name,
 		arg.Tag,
+		arg.TagText,
+		arg.PostedAt,
+		arg.StartsAt,
+		arg.EndsAt,
 		arg.Body,
 		arg.SiteID,
 	)
@@ -47,6 +59,56 @@ func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (Event
 		&i.UpdatedAt,
 		&i.Name,
 		&i.Tag,
+		&i.TagText,
+		&i.PostedAt,
+		&i.StartsAt,
+		&i.EndsAt,
+		&i.Body,
+		&i.SiteID,
+	)
+	return i, err
+}
+
+const createEventWithNull = `-- name: CreateEventWithNull :one
+INSERT INTO events (id, created_at, updated_at, name, tag, tag_text, body, site_id)
+VALUES (
+    gen_random_uuid(),
+    NOW(),
+    NOW(),
+    $1,
+    $2,
+    $3,
+    $4,
+    $5
+)
+RETURNING id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, site_id
+`
+
+type CreateEventWithNullParams struct {
+	Name    string
+	Tag     int32
+	TagText string
+	Body    string
+	SiteID  uuid.UUID
+}
+
+func (q *Queries) CreateEventWithNull(ctx context.Context, arg CreateEventWithNullParams) (Event, error) {
+	row := q.db.QueryRowContext(ctx, createEventWithNull,
+		arg.Name,
+		arg.Tag,
+		arg.TagText,
+		arg.Body,
+		arg.SiteID,
+	)
+	var i Event
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+		&i.Tag,
+		&i.TagText,
+		&i.PostedAt,
 		&i.StartsAt,
 		&i.EndsAt,
 		&i.Body,
@@ -86,7 +148,7 @@ func (q *Queries) DeleteOldEvents(ctx context.Context) error {
 }
 
 const getEventByID = `-- name: GetEventByID :one
-SELECT id, created_at, updated_at, name, tag, starts_at, ends_at, body, site_id FROM events
+SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, site_id FROM events
 WHERE id = $1
 `
 
@@ -99,6 +161,62 @@ func (q *Queries) GetEventByID(ctx context.Context, id uuid.UUID) (Event, error)
 		&i.UpdatedAt,
 		&i.Name,
 		&i.Tag,
+		&i.TagText,
+		&i.PostedAt,
+		&i.StartsAt,
+		&i.EndsAt,
+		&i.Body,
+		&i.SiteID,
+	)
+	return i, err
+}
+
+const getEventByName = `-- name: GetEventByName :one
+SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, site_id FROM events
+WHERE name = $1
+`
+
+func (q *Queries) GetEventByName(ctx context.Context, name string) (Event, error) {
+	row := q.db.QueryRowContext(ctx, getEventByName, name)
+	var i Event
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+		&i.Tag,
+		&i.TagText,
+		&i.PostedAt,
+		&i.StartsAt,
+		&i.EndsAt,
+		&i.Body,
+		&i.SiteID,
+	)
+	return i, err
+}
+
+const getEventByNameAndPostedAtAndSiteID = `-- name: GetEventByNameAndPostedAtAndSiteID :one
+SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, site_id FROM events
+WHERE name = $1 AND posted_at = $2 AND site_id = $3
+`
+
+type GetEventByNameAndPostedAtAndSiteIDParams struct {
+	Name     string
+	PostedAt sql.NullTime
+	SiteID   uuid.UUID
+}
+
+func (q *Queries) GetEventByNameAndPostedAtAndSiteID(ctx context.Context, arg GetEventByNameAndPostedAtAndSiteIDParams) (Event, error) {
+	row := q.db.QueryRowContext(ctx, getEventByNameAndPostedAtAndSiteID, arg.Name, arg.PostedAt, arg.SiteID)
+	var i Event
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+		&i.Tag,
+		&i.TagText,
+		&i.PostedAt,
 		&i.StartsAt,
 		&i.EndsAt,
 		&i.Body,
@@ -108,7 +226,7 @@ func (q *Queries) GetEventByID(ctx context.Context, id uuid.UUID) (Event, error)
 }
 
 const getEvents = `-- name: GetEvents :many
-SELECT id, created_at, updated_at, name, tag, starts_at, ends_at, body, site_id FROM events
+SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, site_id FROM events
 ORDER BY created_at
 `
 
@@ -127,6 +245,8 @@ func (q *Queries) GetEvents(ctx context.Context) ([]Event, error) {
 			&i.UpdatedAt,
 			&i.Name,
 			&i.Tag,
+			&i.TagText,
+			&i.PostedAt,
 			&i.StartsAt,
 			&i.EndsAt,
 			&i.Body,
@@ -146,7 +266,7 @@ func (q *Queries) GetEvents(ctx context.Context) ([]Event, error) {
 }
 
 const getEventsBySiteID = `-- name: GetEventsBySiteID :many
-SELECT id, created_at, updated_at, name, tag, starts_at, ends_at, body, site_id FROM events
+SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, site_id FROM events
 WHERE site_id = $1
 ORDER BY created_at
 `
@@ -166,6 +286,8 @@ func (q *Queries) GetEventsBySiteID(ctx context.Context, siteID uuid.UUID) ([]Ev
 			&i.UpdatedAt,
 			&i.Name,
 			&i.Tag,
+			&i.TagText,
+			&i.PostedAt,
 			&i.StartsAt,
 			&i.EndsAt,
 			&i.Body,
@@ -185,7 +307,7 @@ func (q *Queries) GetEventsBySiteID(ctx context.Context, siteID uuid.UUID) ([]Ev
 }
 
 const getEventsOnGoing = `-- name: GetEventsOnGoing :many
-SELECT id, created_at, updated_at, name, tag, starts_at, ends_at, body, site_id FROM events
+SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, site_id FROM events
 WHERE starts_at <= NOW() and ends_at >= NOW()
 ORDER BY created_at
 `
@@ -205,6 +327,8 @@ func (q *Queries) GetEventsOnGoing(ctx context.Context) ([]Event, error) {
 			&i.UpdatedAt,
 			&i.Name,
 			&i.Tag,
+			&i.TagText,
+			&i.PostedAt,
 			&i.StartsAt,
 			&i.EndsAt,
 			&i.Body,
@@ -225,17 +349,23 @@ func (q *Queries) GetEventsOnGoing(ctx context.Context) ([]Event, error) {
 
 const setEventDates = `-- name: SetEventDates :exec
 UPDATE events
-SET updated_at = NOW(), starts_at = $1, ends_at = $2
-WHERE id = $3
+SET updated_at = NOW(), posted_at = $1, starts_at = $2, ends_at = $3
+WHERE id = $4
 `
 
 type SetEventDatesParams struct {
+	PostedAt sql.NullTime
 	StartsAt sql.NullTime
 	EndsAt   sql.NullTime
 	ID       uuid.UUID
 }
 
 func (q *Queries) SetEventDates(ctx context.Context, arg SetEventDatesParams) error {
-	_, err := q.db.ExecContext(ctx, setEventDates, arg.StartsAt, arg.EndsAt, arg.ID)
+	_, err := q.db.ExecContext(ctx, setEventDates,
+		arg.PostedAt,
+		arg.StartsAt,
+		arg.EndsAt,
+		arg.ID,
+	)
 	return err
 }

@@ -11,11 +11,13 @@ import (
 )
 
 type PokeSVParsedResult struct {
-	Title    string
-	Kind     string
-	KindTxt  string
-	Body     string
-	PostedAt int64
+	Title string
+	// Kind    string // @@@ int로 변환
+	Kind    int
+	KindTxt string
+	Body    string
+	// PostedAt int64 // @@@ 모두 time.Time으로 통일
+	PostedAt time.Time
 	StartsAt []time.Time // @@@ 이벤트가 두 기간에 걸쳐있는 경우도 있으므로 [] 슬라이스
 	EndsAt   []time.Time
 }
@@ -77,12 +79,19 @@ func PokeParse(input []crawler.PokeSVResult) ([]PokeSVParsedResult, error) {
 
 		// log.Printf("re match: %s", match)
 
+		// int64 유닉스 타임을 time.Time으로 변환
+		stAt := time.Unix(r.StAt, 0)
+		postedAt := stAt.In(loc)
+
+		// r.Kind의 string을 int로 변환
+		kind, _ := strconv.Atoi(r.Kind)
+
 		o := PokeSVParsedResult{
 			Title:    r.Title,
-			Kind:     r.Kind,
+			Kind:     kind,
 			KindTxt:  r.KindTxt,
 			Body:     r.Body,
-			PostedAt: r.StAt,
+			PostedAt: postedAt,
 		}
 
 		// <h1>.*기간.*<\h1> 뒤의 시간 찾기

@@ -1,5 +1,5 @@
 -- name: CreateEvent :one
-INSERT INTO events (id, created_at, updated_at, name, tag, body, site_id)
+INSERT INTO events (id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, site_id)
 VALUES (
     gen_random_uuid(),
     NOW(),
@@ -7,7 +7,25 @@ VALUES (
     $1,
     $2,
     $3,
-    $4
+    $4,
+    $5,
+    $6,
+    $7,
+    $8
+)
+RETURNING *;
+
+-- name: CreateEventWithNull :one
+INSERT INTO events (id, created_at, updated_at, name, tag, tag_text, body, site_id)
+VALUES (
+    gen_random_uuid(),
+    NOW(),
+    NOW(),
+    $1,
+    $2,
+    $3,
+    $4,
+    $5
 )
 RETURNING *;
 
@@ -18,6 +36,14 @@ ORDER BY created_at;
 -- name: GetEventByID :one
 SELECT * FROM events
 WHERE id = $1;
+
+-- name: GetEventByName :one
+SELECT * FROM events
+WHERE name = $1;
+
+-- name: GetEventByNameAndPostedAtAndSiteID :one
+SELECT * FROM events
+WHERE name = $1 AND posted_at = $2 AND site_id = $3;
 
 -- name: GetEventsBySiteID :many
 SELECT * FROM events
@@ -31,8 +57,8 @@ ORDER BY created_at;
 
 -- name: SetEventDates :exec
 UPDATE events
-SET updated_at = NOW(), starts_at = $1, ends_at = $2
-WHERE id = $3;
+SET updated_at = NOW(), posted_at = $1, starts_at = $2, ends_at = $3
+WHERE id = $4;
 
 -- name: DeleteEventByID :exec
 DELETE FROM events

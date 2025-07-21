@@ -42,6 +42,7 @@ func main() {
 	cmds.Register("sites", commands.HandlerSites)
 	cmds.Register("addsite", commands.HandlerAddSite)
 	cmds.Register("deletesite", commands.HandlerDeleteSite)
+	cmds.Register("crawl", commands.HandlerCrawl)
 
 	// 유저 명령어 입력 확인
 	if len(os.Args) < 2 {

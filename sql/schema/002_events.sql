@@ -1,12 +1,14 @@
 -- +goose Up
 CREATE TABLE events (
     id UUID PRIMARY KEY,
-    created_at TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
     name TEXT NOT NULL,
-    tag TEXT NOT NULL,
-    starts_at TIMESTAMP,
-    ends_at TIMESTAMP,
+    tag INTEGER NOT NULL,
+    tag_text TEXT NOT NULL,
+    posted_at TIMESTAMP WITH TIME ZONE,
+    starts_at TIMESTAMP WITH TIME ZONE,
+    ends_at TIMESTAMP WITH TIME ZONE,
     body TEXT NOT NULL,
     site_id UUID NOT NULL,
     CONSTRAINT fk_sites

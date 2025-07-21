@@ -16,7 +16,9 @@ type Event struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	Name      string
-	Tag       string
+	Tag       int32
+	TagText   string
+	PostedAt  sql.NullTime
 	StartsAt  sql.NullTime
 	EndsAt    sql.NullTime
 	Body      string

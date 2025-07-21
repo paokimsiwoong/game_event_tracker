@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"sort"
 	"strconv"
@@ -109,11 +108,11 @@ func PokeCrawl(url string, duration int) ([]PokeSVResult, error) {
 		}
 
 		// 임시로 data 타이틀과 날짜 확인
-		t := time.Unix(stAtUnix, 0)
+		// t := time.Unix(stAtUnix, 0)
 		// kst := t.In(time.FixedZone("KST", 9*60*60))
 		// time.FixedZone은 지정한 이름과 UTC 기준 오프셋을 입력하여 만드는 커스텀 시간대
-		kst := t.Local()
-		log.Printf("data title: %v\nposted at: %v\n", data.Title, kst)
+		// kst := t.Local()
+		// log.Printf("data title: %v\nposted at: %v\n", data.Title, kst)
 
 		wg.Add(1)
 		go fetchURL(client, pokeURL+data.Link, ch, &wg, sem, PokeSVIntermediateResult{
