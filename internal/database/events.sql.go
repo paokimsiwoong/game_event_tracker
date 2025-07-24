@@ -138,6 +138,30 @@ func (q *Queries) DeleteEventsBySiteID(ctx context.Context, siteID uuid.UUID) er
 	return err
 }
 
+const deleteEventsBySiteName = `-- name: DeleteEventsBySiteName :exec
+DELETE FROM events
+USING sites
+WHERE events.site_id = sites.id AND sites.name = $1
+`
+
+func (q *Queries) DeleteEventsBySiteName(ctx context.Context, name string) error {
+	_, err := q.db.ExecContext(ctx, deleteEventsBySiteName, name)
+	return err
+}
+
+const deleteEventsBySiteUrl = `-- name: DeleteEventsBySiteUrl :exec
+DELETE FROM events
+WHERE EXISTS (
+    SELECT 1 FROM sites
+    WHERE sites.id = events.site_id AND sites.url = $1
+)
+`
+
+func (q *Queries) DeleteEventsBySiteUrl(ctx context.Context, url string) error {
+	_, err := q.db.ExecContext(ctx, deleteEventsBySiteUrl, url)
+	return err
+}
+
 const deleteOldEvents = `-- name: DeleteOldEvents :exec
 DELETE FROM events
 WHERE ends_at < NOW()
@@ -440,6 +464,76 @@ func (q *Queries) GetEventsOnGoing(ctx context.Context) ([]Event, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const getEventsOnGoingAndSites = `-- name: GetEventsOnGoingAndSites :many
+SELECT events.id, events.created_at, events.updated_at, events.name, events.tag, events.tag_text, events.posted_at, events.starts_at, events.ends_at, events.body, events.site_id, sites.name AS site_name, sites.url AS site_url FROM events
+INNER JOIN sites
+ON events.site_id = sites.id
+WHERE events.starts_at <= NOW() AND (events.ends_at IS NULL OR events.ends_at >= NOW())
+ORDER BY events.posted_at DESC, events.starts_at DESC
+`
+
+type GetEventsOnGoingAndSitesRow struct {
+	ID        uuid.UUID
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Name      string
+	Tag       int32
+	TagText   string
+	PostedAt  sql.NullTime
+	StartsAt  sql.NullTime
+	EndsAt    sql.NullTime
+	Body      string
+	SiteID    uuid.UUID
+	SiteName  string
+	SiteUrl   string
+}
+
+func (q *Queries) GetEventsOnGoingAndSites(ctx context.Context) ([]GetEventsOnGoingAndSitesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getEventsOnGoingAndSites)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetEventsOnGoingAndSitesRow
+	for rows.Next() {
+		var i GetEventsOnGoingAndSitesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Name,
+			&i.Tag,
+			&i.TagText,
+			&i.PostedAt,
+			&i.StartsAt,
+			&i.EndsAt,
+			&i.Body,
+			&i.SiteID,
+			&i.SiteName,
+			&i.SiteUrl,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const resetEvents = `-- name: ResetEvents :exec
+DELETE FROM events
+`
+
+func (q *Queries) ResetEvents(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, resetEvents)
+	return err
 }
 
 const setEventDates = `-- name: SetEventDates :exec

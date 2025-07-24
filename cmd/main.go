@@ -41,7 +41,7 @@ func main() {
 	//  command 등록
 	cmds.Register("sites", commands.HandlerSites)
 	cmds.Register("addsite", commands.HandlerAddSite)
-	cmds.Register("deletesite", commands.HandlerDeleteSite)
+	cmds.Register("delete", commands.HandlerDelete)
 	cmds.Register("crawl", commands.HandlerCrawl)
 	cmds.Register("events", commands.HandlerEvents)
 
