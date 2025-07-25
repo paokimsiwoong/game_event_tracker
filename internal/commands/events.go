@@ -28,7 +28,7 @@ func HandlerEvents(s *State, cmd Command) error {
 		for _, event := range events {
 			if event.EndsAt.Valid {
 				fmt.Printf(
-					"Name: %s\nCreated at: %v\nPosted at: %v\nTag: %v\nTag text: %v\nStarts at: %v\nEnds at: %v\nSite name: %v\nSite url: %v\n",
+					"Name: %s\nCreated at: %v\nPosted at: %v\nTag: %v\nTag text: %v\nStarts at: %v\nEnds at: %v\nEvent url: %v\nSite name: %v\nSite url: %v\n",
 					event.Name,
 					event.CreatedAt,
 					event.PostedAt.Time,
@@ -36,18 +36,20 @@ func HandlerEvents(s *State, cmd Command) error {
 					event.TagText,
 					event.StartsAt.Time,
 					event.EndsAt.Time,
+					event.EventUrl,
 					event.SiteName,
 					event.SiteUrl,
 				)
 			} else {
 				fmt.Printf(
-					"Name: %s\nCreated at: %v\nPosted at: %v\nTag: %v\nTag text: %v\nStarts at: %v\nEnds at: permanent\nSite name: %v\nSite url: %v\n",
+					"Name: %s\nCreated at: %v\nPosted at: %v\nTag: %v\nTag text: %v\nStarts at: %v\nEnds at: permanent\nEvent url: %v\nSite name: %v\nSite url: %v\n",
 					event.Name,
 					event.CreatedAt,
 					event.PostedAt.Time,
 					event.Tag,
 					event.TagText,
 					event.StartsAt.Time,
+					event.EventUrl,
 					event.SiteName,
 					event.SiteUrl,
 				)
@@ -66,7 +68,7 @@ func HandlerEvents(s *State, cmd Command) error {
 
 		fmt.Println("--------------------------------------------------")
 		fmt.Println("--------------------------------------------------")
-		fmt.Printf("%d events in the table\n", len(events))
+		fmt.Printf("%d ongoing events in the table\n", len(events))
 		fmt.Println("--------------------------------------------------")
 		fmt.Println("--------------------------------------------------")
 
@@ -77,7 +79,7 @@ func HandlerEvents(s *State, cmd Command) error {
 		for _, event := range events {
 			if event.EndsAt.Valid {
 				fmt.Printf(
-					"Name: %s\nCreated at: %v\nPosted at: %v\nTag: %v\nTag text: %v\nStarts at: %v\nEnds at: %v\nSite name: %v\nSite url: %v\n",
+					"Name: %s\nCreated at: %v\nPosted at: %v\nTag: %v\nTag text: %v\nStarts at: %v\nEnds at: %v\nEvent url: %v\nSite name: %v\nSite url: %v\n",
 					event.Name,
 					event.CreatedAt,
 					event.PostedAt.Time,
@@ -85,18 +87,20 @@ func HandlerEvents(s *State, cmd Command) error {
 					event.TagText,
 					event.StartsAt.Time,
 					event.EndsAt.Time,
+					event.EventUrl,
 					event.SiteName,
 					event.SiteUrl,
 				)
 			} else {
 				fmt.Printf(
-					"Name: %s\nCreated at: %v\nPosted at: %v\nTag: %v\nTag text: %v\nStarts at: %v\nEnds at: permanent\nSite name: %v\nSite url: %v\n",
+					"Name: %s\nCreated at: %v\nPosted at: %v\nTag: %v\nTag text: %v\nStarts at: %v\nEnds at: permanent\nEvent url: %v\nSite name: %v\nSite url: %v\n",
 					event.Name,
 					event.CreatedAt,
 					event.PostedAt.Time,
 					event.Tag,
 					event.TagText,
 					event.StartsAt.Time,
+					event.EventUrl,
 					event.SiteName,
 					event.SiteUrl,
 				)

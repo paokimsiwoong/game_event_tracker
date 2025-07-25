@@ -22,6 +22,7 @@ type Event struct {
 	StartsAt  sql.NullTime
 	EndsAt    sql.NullTime
 	Body      string
+	EventUrl  string
 	SiteID    uuid.UUID
 }
 

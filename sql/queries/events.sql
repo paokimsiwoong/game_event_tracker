@@ -1,5 +1,5 @@
 -- name: CreateEvent :one
-INSERT INTO events (id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, site_id)
+INSERT INTO events (id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, event_url, site_id)
 VALUES (
     gen_random_uuid(),
     NOW(),
@@ -11,12 +11,13 @@ VALUES (
     $5,
     $6,
     $7,
-    $8
+    $8,
+    $9
 )
 RETURNING *;
 
 -- name: CreateEventWithNull :one
-INSERT INTO events (id, created_at, updated_at, name, tag, tag_text, body, site_id)
+INSERT INTO events (id, created_at, updated_at, name, tag, tag_text, body, event_url, site_id)
 VALUES (
     gen_random_uuid(),
     NOW(),
@@ -25,7 +26,8 @@ VALUES (
     $2,
     $3,
     $4,
-    $5
+    $5,
+    $6
 )
 RETURNING *;
 

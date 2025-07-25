@@ -32,6 +32,7 @@ type PokeSVResult struct {
 	Kind    string
 	KindTxt string
 	Body    string
+	Url     string
 	StAt    int64
 	Success bool
 }
@@ -169,6 +170,7 @@ func fetchURL(client *http.Client, url string, ch chan<- PokeSVResult, wg *sync.
 			KindTxt: intermediate.KindTxt,
 			StAt:    intermediate.StAt,
 			Body:    "Failed to make a GET request",
+			Url:     url,
 			Success: false,
 		}
 		return
@@ -183,6 +185,7 @@ func fetchURL(client *http.Client, url string, ch chan<- PokeSVResult, wg *sync.
 			KindTxt: intermediate.KindTxt,
 			StAt:    intermediate.StAt,
 			Body:    "Failed to read a response",
+			Url:     url,
 			Success: false,
 		}
 		return
@@ -194,6 +197,7 @@ func fetchURL(client *http.Client, url string, ch chan<- PokeSVResult, wg *sync.
 		KindTxt: intermediate.KindTxt,
 		StAt:    intermediate.StAt,
 		Body:    string(rawBytes),
+		Url:     url,
 		Success: true,
 	}
 }

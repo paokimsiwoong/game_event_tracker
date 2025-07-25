@@ -14,7 +14,7 @@ import (
 )
 
 const createEvent = `-- name: CreateEvent :one
-INSERT INTO events (id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, site_id)
+INSERT INTO events (id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, event_url, site_id)
 VALUES (
     gen_random_uuid(),
     NOW(),
@@ -26,9 +26,10 @@ VALUES (
     $5,
     $6,
     $7,
-    $8
+    $8,
+    $9
 )
-RETURNING id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, site_id
+RETURNING id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, event_url, site_id
 `
 
 type CreateEventParams struct {
@@ -39,6 +40,7 @@ type CreateEventParams struct {
 	StartsAt sql.NullTime
 	EndsAt   sql.NullTime
 	Body     string
+	EventUrl string
 	SiteID   uuid.UUID
 }
 
@@ -51,6 +53,7 @@ func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (Event
 		arg.StartsAt,
 		arg.EndsAt,
 		arg.Body,
+		arg.EventUrl,
 		arg.SiteID,
 	)
 	var i Event
@@ -65,13 +68,14 @@ func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (Event
 		&i.StartsAt,
 		&i.EndsAt,
 		&i.Body,
+		&i.EventUrl,
 		&i.SiteID,
 	)
 	return i, err
 }
 
 const createEventWithNull = `-- name: CreateEventWithNull :one
-INSERT INTO events (id, created_at, updated_at, name, tag, tag_text, body, site_id)
+INSERT INTO events (id, created_at, updated_at, name, tag, tag_text, body, event_url, site_id)
 VALUES (
     gen_random_uuid(),
     NOW(),
@@ -80,17 +84,19 @@ VALUES (
     $2,
     $3,
     $4,
-    $5
+    $5,
+    $6
 )
-RETURNING id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, site_id
+RETURNING id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, event_url, site_id
 `
 
 type CreateEventWithNullParams struct {
-	Name    string
-	Tag     int32
-	TagText string
-	Body    string
-	SiteID  uuid.UUID
+	Name     string
+	Tag      int32
+	TagText  string
+	Body     string
+	EventUrl string
+	SiteID   uuid.UUID
 }
 
 func (q *Queries) CreateEventWithNull(ctx context.Context, arg CreateEventWithNullParams) (Event, error) {
@@ -99,6 +105,7 @@ func (q *Queries) CreateEventWithNull(ctx context.Context, arg CreateEventWithNu
 		arg.Tag,
 		arg.TagText,
 		arg.Body,
+		arg.EventUrl,
 		arg.SiteID,
 	)
 	var i Event
@@ -113,6 +120,7 @@ func (q *Queries) CreateEventWithNull(ctx context.Context, arg CreateEventWithNu
 		&i.StartsAt,
 		&i.EndsAt,
 		&i.Body,
+		&i.EventUrl,
 		&i.SiteID,
 	)
 	return i, err
@@ -173,7 +181,7 @@ func (q *Queries) DeleteOldEvents(ctx context.Context) error {
 }
 
 const getEventByID = `-- name: GetEventByID :one
-SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, site_id FROM events
+SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, event_url, site_id FROM events
 WHERE id = $1
 `
 
@@ -191,13 +199,14 @@ func (q *Queries) GetEventByID(ctx context.Context, id uuid.UUID) (Event, error)
 		&i.StartsAt,
 		&i.EndsAt,
 		&i.Body,
+		&i.EventUrl,
 		&i.SiteID,
 	)
 	return i, err
 }
 
 const getEvents = `-- name: GetEvents :many
-SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, site_id FROM events
+SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, event_url, site_id FROM events
 ORDER BY created_at
 `
 
@@ -221,6 +230,7 @@ func (q *Queries) GetEvents(ctx context.Context) ([]Event, error) {
 			&i.StartsAt,
 			&i.EndsAt,
 			&i.Body,
+			&i.EventUrl,
 			&i.SiteID,
 		); err != nil {
 			return nil, err
@@ -237,7 +247,7 @@ func (q *Queries) GetEvents(ctx context.Context) ([]Event, error) {
 }
 
 const getEventsAndSites = `-- name: GetEventsAndSites :many
-SELECT events.id, events.created_at, events.updated_at, events.name, events.tag, events.tag_text, events.posted_at, events.starts_at, events.ends_at, events.body, events.site_id, sites.name AS site_name, sites.url AS site_url FROM events
+SELECT events.id, events.created_at, events.updated_at, events.name, events.tag, events.tag_text, events.posted_at, events.starts_at, events.ends_at, events.body, events.event_url, events.site_id, sites.name AS site_name, sites.url AS site_url FROM events
 INNER JOIN sites
 ON events.site_id = sites.id
 ORDER BY events.posted_at DESC, events.starts_at DESC
@@ -254,6 +264,7 @@ type GetEventsAndSitesRow struct {
 	StartsAt  sql.NullTime
 	EndsAt    sql.NullTime
 	Body      string
+	EventUrl  string
 	SiteID    uuid.UUID
 	SiteName  string
 	SiteUrl   string
@@ -279,6 +290,7 @@ func (q *Queries) GetEventsAndSites(ctx context.Context) ([]GetEventsAndSitesRow
 			&i.StartsAt,
 			&i.EndsAt,
 			&i.Body,
+			&i.EventUrl,
 			&i.SiteID,
 			&i.SiteName,
 			&i.SiteUrl,
@@ -297,7 +309,7 @@ func (q *Queries) GetEventsAndSites(ctx context.Context) ([]GetEventsAndSitesRow
 }
 
 const getEventsByName = `-- name: GetEventsByName :many
-SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, site_id FROM events
+SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, event_url, site_id FROM events
 WHERE name = $1
 ORDER BY created_at
 `
@@ -322,6 +334,7 @@ func (q *Queries) GetEventsByName(ctx context.Context, name string) ([]Event, er
 			&i.StartsAt,
 			&i.EndsAt,
 			&i.Body,
+			&i.EventUrl,
 			&i.SiteID,
 		); err != nil {
 			return nil, err
@@ -338,7 +351,7 @@ func (q *Queries) GetEventsByName(ctx context.Context, name string) ([]Event, er
 }
 
 const getEventsByNameAndPostedAtAndSiteID = `-- name: GetEventsByNameAndPostedAtAndSiteID :many
-SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, site_id FROM events
+SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, event_url, site_id FROM events
 WHERE name = $1 AND posted_at = $2 AND site_id = $3
 ORDER BY created_at
 `
@@ -369,6 +382,7 @@ func (q *Queries) GetEventsByNameAndPostedAtAndSiteID(ctx context.Context, arg G
 			&i.StartsAt,
 			&i.EndsAt,
 			&i.Body,
+			&i.EventUrl,
 			&i.SiteID,
 		); err != nil {
 			return nil, err
@@ -385,7 +399,7 @@ func (q *Queries) GetEventsByNameAndPostedAtAndSiteID(ctx context.Context, arg G
 }
 
 const getEventsBySiteID = `-- name: GetEventsBySiteID :many
-SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, site_id FROM events
+SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, event_url, site_id FROM events
 WHERE site_id = $1
 ORDER BY created_at
 `
@@ -410,6 +424,7 @@ func (q *Queries) GetEventsBySiteID(ctx context.Context, siteID uuid.UUID) ([]Ev
 			&i.StartsAt,
 			&i.EndsAt,
 			&i.Body,
+			&i.EventUrl,
 			&i.SiteID,
 		); err != nil {
 			return nil, err
@@ -426,7 +441,7 @@ func (q *Queries) GetEventsBySiteID(ctx context.Context, siteID uuid.UUID) ([]Ev
 }
 
 const getEventsOnGoing = `-- name: GetEventsOnGoing :many
-SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, site_id FROM events
+SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, event_url, site_id FROM events
 WHERE starts_at <= NOW() and ends_at >= NOW()
 ORDER BY created_at
 `
@@ -451,6 +466,7 @@ func (q *Queries) GetEventsOnGoing(ctx context.Context) ([]Event, error) {
 			&i.StartsAt,
 			&i.EndsAt,
 			&i.Body,
+			&i.EventUrl,
 			&i.SiteID,
 		); err != nil {
 			return nil, err
@@ -467,7 +483,7 @@ func (q *Queries) GetEventsOnGoing(ctx context.Context) ([]Event, error) {
 }
 
 const getEventsOnGoingAndSites = `-- name: GetEventsOnGoingAndSites :many
-SELECT events.id, events.created_at, events.updated_at, events.name, events.tag, events.tag_text, events.posted_at, events.starts_at, events.ends_at, events.body, events.site_id, sites.name AS site_name, sites.url AS site_url FROM events
+SELECT events.id, events.created_at, events.updated_at, events.name, events.tag, events.tag_text, events.posted_at, events.starts_at, events.ends_at, events.body, events.event_url, events.site_id, sites.name AS site_name, sites.url AS site_url FROM events
 INNER JOIN sites
 ON events.site_id = sites.id
 WHERE events.starts_at <= NOW() AND (events.ends_at IS NULL OR events.ends_at >= NOW())
@@ -485,6 +501,7 @@ type GetEventsOnGoingAndSitesRow struct {
 	StartsAt  sql.NullTime
 	EndsAt    sql.NullTime
 	Body      string
+	EventUrl  string
 	SiteID    uuid.UUID
 	SiteName  string
 	SiteUrl   string
@@ -510,6 +527,7 @@ func (q *Queries) GetEventsOnGoingAndSites(ctx context.Context) ([]GetEventsOnGo
 			&i.StartsAt,
 			&i.EndsAt,
 			&i.Body,
+			&i.EventUrl,
 			&i.SiteID,
 			&i.SiteName,
 			&i.SiteUrl,

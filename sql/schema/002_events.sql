@@ -10,6 +10,7 @@ CREATE TABLE events (
     starts_at TIMESTAMP WITH TIME ZONE,
     ends_at TIMESTAMP WITH TIME ZONE,
     body TEXT NOT NULL,
+    event_url TEXT NOT NULL,
     site_id UUID NOT NULL,
     CONSTRAINT fk_sites
     FOREIGN KEY (site_id)

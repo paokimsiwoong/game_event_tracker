@@ -16,6 +16,7 @@ type PokeSVParsedResult struct {
 	Kind    int
 	KindTxt string
 	Body    string
+	Url     string
 	// PostedAt int64 // @@@ 모두 time.Time으로 통일
 	PostedAt time.Time
 	StartsAt []time.Time // @@@ 이벤트가 두 기간에 걸쳐있는 경우도 있으므로 [] 슬라이스
@@ -91,6 +92,7 @@ func PokeParse(input []crawler.PokeSVResult) ([]PokeSVParsedResult, error) {
 			Kind:     kind,
 			KindTxt:  r.KindTxt,
 			Body:     r.Body,
+			Url:      r.Url,
 			PostedAt: postedAt,
 		}
 

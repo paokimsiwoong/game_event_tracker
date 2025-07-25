@@ -92,8 +92,9 @@ func HandlerCrawl(s *State, cmd Command) error {
 						Time:  p.EndsAt[i],
 						Valid: true,
 					},
-					Body:   p.Body,
-					SiteID: site.ID,
+					Body:     p.Body,
+					EventUrl: p.Url,
+					SiteID:   site.ID,
 				})
 			} else { // @@@ 종료시점 없는 경우 처리해야함
 				s.PtrDB.CreateEvent(context.Background(), database.CreateEventParams{
@@ -111,8 +112,9 @@ func HandlerCrawl(s *State, cmd Command) error {
 					EndsAt: sql.NullTime{
 						Valid: false,
 					},
-					Body:   p.Body,
-					SiteID: site.ID,
+					Body:     p.Body,
+					EventUrl: p.Url,
+					SiteID:   site.ID,
 				})
 			}
 
