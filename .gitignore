@@ -1,3 +1,6 @@
 .env
 temp*.txt
 tester.go
+tester2.go
+client_secret*
+token.json

@@ -26,3 +26,4 @@ game-event-calendar/
 └── README.md
 ```
 
+TODO: events에는 동일 이벤트가 중복되어 들어가지 않도록 변경하기(posts테이블과 events 테이블로 분리? / 시작, 종료 시점 pair를 UNIQUE(,)로 하면 동일 일정 다른 이벤트가 있음 => tag, 시작, 종료 시점 trio를 unique로?)
