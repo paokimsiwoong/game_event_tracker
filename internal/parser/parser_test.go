@@ -325,20 +325,20 @@ func TestPokeParse(t *testing.T) {
 	assert.Equal(t, 4, len(result))
 
 	// 첫번쨰 테라레이드
-	assert.Equal(t, "1", result[0].Kind)
+	assert.Equal(t, 1, result[0].Kind)
 	assert.Equal(t, time.Date(2025, time.July, 11, 9, 0, 0, 0, loc), result[0].StartsAt[0])
 	assert.Equal(t, time.Date(2025, time.July, 18, 9, 0, 0, 0, loc), result[0].StartsAt[1])
 	assert.Equal(t, time.Date(2025, time.July, 14, 8, 59, 0, 0, loc), result[0].EndsAt[0])
 	assert.Equal(t, time.Date(2025, time.July, 21, 8, 59, 0, 0, loc), result[0].EndsAt[1])
 
 	// 이상한 소포
-	assert.Equal(t, "5", result[2].Kind)
+	assert.Equal(t, 5, result[2].Kind)
 	assert.Equal(t, 1, len(result[2].StartsAt))
 	assert.Equal(t, 0, len(result[2].EndsAt))
 	assert.Equal(t, time.Date(2025, time.February, 27, 23, 0, 0, 0, loc), result[2].StartsAt[0])
 
 	// 연말~연초인 이벤트
-	assert.Equal(t, "1", result[3].Kind) // @@@ 랭크배틀은 제외되므로 검은 레쿠쟈 인덱스는 4가 아니라 3
+	assert.Equal(t, 1, result[3].Kind) // @@@ 랭크배틀은 제외되므로 검은 레쿠쟈 인덱스는 4가 아니라 3
 	assert.Equal(t, 1, len(result[3].StartsAt))
 	assert.Equal(t, 1, len(result[3].EndsAt))
 	assert.Equal(t, time.Date(2024, time.December, 20, 9, 0, 0, 0, loc), result[3].StartsAt[0])
