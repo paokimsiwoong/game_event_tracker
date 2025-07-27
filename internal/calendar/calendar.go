@@ -11,7 +11,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
+	"github.com/paokimsiwoong/game_event_tracker/internal/database"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/calendar/v3"
@@ -20,6 +22,7 @@ import (
 
 var ErrTemp = errors.New("temp")
 
+const clientSecretFilePath = "../../client_secret.json"
 const tokFilePath = "../../token.json"
 
 // 사용자 인증 토큰 가져오기
@@ -119,13 +122,13 @@ func (s *savingTokenSource) Token() (*oauth2.Token, error) {
 	return t, err
 }
 
-func PokeCalendar() error {
+func NewCalendar() (*calendar.Service, error) {
 	// 1. 인증 정보 로드
-	b, err := os.ReadFile("../../client_secret.json")
+	b, err := os.ReadFile(clientSecretFilePath)
 	// client_secret.json는 OAuth 클라이언트 인증 정보를 담고 있음
 	if err != nil {
 		// log.Fatalf("client_secret.json 읽기 실패: %v", err)
-		return fmt.Errorf("client_secret.json 읽기 실패: %v", err)
+		return nil, fmt.Errorf("client_secret.json 읽기 실패: %v", err)
 	}
 	config, err := google.ConfigFromJSON(b, calendar.CalendarScope)
 	// ConfigFromJSON:
@@ -141,13 +144,13 @@ func PokeCalendar() error {
 	// // calendar.CalendarScope는 구글 캘린더 API 접근을 위한 권한 범위를 지정하는 상수
 	if err != nil {
 		// log.Fatalf("OAuth2 config 생성 실패: %v", err)
-		return fmt.Errorf("OAuth2 config 생성 실패: %v", err)
+		return nil, fmt.Errorf("OAuth2 config 생성 실패: %v", err)
 	}
 
 	// getToken함수로 OAuth2 access token 생성
 	token, err := getToken(config)
 	if err != nil {
-		return fmt.Errorf("OAuth2 access token 생성 실패: %v", err)
+		return nil, fmt.Errorf("OAuth2 access token 생성 실패: %v", err)
 	}
 
 	// access token이 만료됐을 때 코드에서 refresh token으로 자동 재발급 시도를 하게 하려면
@@ -180,26 +183,71 @@ func PokeCalendar() error {
 	// // @@@ StaticTokenSource는 "항상 동일한 토큰만 반환"하며, 토큰이 만료되어도 기존 토큰만 고정적으로 반환
 
 	// 2. Calendar API 서비스 생성
+	// calendar.NewService는 Google Calendar API를 Go에서 실제로 사용하기 위한 "API 클라이언트"의 생성 함수
+	// 여기에 인증 정보(HTTP 클라이언트, credentials 등)를 옵션으로 넘겨주어야 하며, 반환된 서비스 객체를 기반으로 구글 캘린더의 모든 기능을 호출 가능
 	srv, err := calendar.NewService(context.Background(), option.WithHTTPClient(client))
 	if err != nil {
 		// log.Fatalf("Calendar Service 생성 실패: %v", err)
-		return fmt.Errorf("calendar service 생성 실패: %v", err)
+		return nil, fmt.Errorf("calendar service 생성 실패: %v", err)
 	}
 
-	// 3. 일정(이벤트) 생성 예시
+	return srv, nil
+}
+
+func AddEvent(srv *calendar.Service, data database.GetEventsOnGoingAndSitesRow) error {
+	start := data.StartsAt.Time.Format(time.RFC3339)
+	var end string
+	if data.EndsAt.Valid {
+		end = data.EndsAt.Time.Format(time.RFC3339)
+	} else {
+		end = data.StartsAt.Time.Add(time.Hour).Format(time.RFC3339)
+	}
+
+	desc := data.Name + " (" + data.EventUrl + ")"
+
 	event := &calendar.Event{
-		Summary:     "Go Calendar 연동 테스트4",
+		Summary:     data.TagText,
 		Location:    "서울",
-		Description: "이것은 Go로 추가한 이벤트입니다4.",
+		Description: desc,
 		Start: &calendar.EventDateTime{
-			DateTime: "2025-07-28T10:00:00+09:00",
+			DateTime: start,
 			TimeZone: "Asia/Seoul",
 		},
 		End: &calendar.EventDateTime{
-			DateTime: "2025-07-28T11:00:00+09:00",
+			DateTime: end,
 			TimeZone: "Asia/Seoul",
 		},
 	}
+
+	calendarId := "primary"
+	event, err := srv.Events.Insert(calendarId, event).Do()
+	if err != nil {
+		// log.Fatalf("일정 생성 실패: %v", err)
+		return fmt.Errorf("일정 생성 실패: %v", err)
+	}
+	fmt.Printf("이벤트 생성됨: %s\n", event.HtmlLink)
+
+	return nil
+}
+
+func TestCalendar(srv *calendar.Service) error {
+	var err error
+	// 3. 일정(이벤트) 생성 예시
+	t := time.Now()
+	event := &calendar.Event{
+		Summary:     "Go Calendar 연동 테스트",
+		Location:    "서울",
+		Description: "이것은 Go로 추가한 이벤트입니다.",
+		Start: &calendar.EventDateTime{
+			DateTime: t.Format(time.RFC3339),
+			TimeZone: "Asia/Seoul",
+		},
+		End: &calendar.EventDateTime{
+			DateTime: t.Add(time.Hour).Format(time.RFC3339),
+			TimeZone: "Asia/Seoul",
+		},
+	}
+
 	calendarId := "primary"
 	event, err = srv.Events.Insert(calendarId, event).Do()
 	if err != nil {

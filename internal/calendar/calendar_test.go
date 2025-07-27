@@ -1,16 +1,39 @@
 package calendar
 
 import (
+	"context"
+	"database/sql"
 	"testing"
 
+	_ "github.com/lib/pq"
+
+	"github.com/paokimsiwoong/game_event_tracker/internal/database"
 	"github.com/stretchr/testify/require"
 )
 
-func TestPokeCalendar(t *testing.T) {
+func TestNewCalendar(t *testing.T) {
 	// @@@ html 내용이 테스트 시점에 따라 바뀌므로 다른 테스트 방식 고려 필요 @@@
-	// Test: Good url with 5 days duration
-	err := PokeCalendar()
+	// Test: add a event to Google calendar
+	srv, err := NewCalendar()
+	require.NoError(t, err)
+	err = TestCalendar(srv)
 	require.NoError(t, err)
 	// require.Error(t, err)
 	// assert.Equal(t, ErrTemp, err)
+
+	// Test: add a event to Google calendar with db data
+
+	// sql.Open의 첫번째 인자로 사용하는 sql 드라이버를 지정(_ "github.com/lib/pq"이 postgres)
+	// 두번째 인자로는 connection string(postgres://username:password@localhost:5432/dbname?sslmode=disable 형태)로 database 연결
+	db, err := sql.Open("postgres", "postgres://postgres:20151223@localhost:5432/getker?sslmode=disable")
+	require.NoError(t, err)
+	// db는 *sql.DB 타입
+	defer db.Close()
+
+	// sqlc가 생성한 database 패키지 사용
+	dbQueries := database.New(db)
+	events, err := dbQueries.GetEventsOnGoingAndSites(context.Background())
+	require.NoError(t, err)
+	err = AddEvent(srv, events[0])
+	require.NoError(t, err)
 }
