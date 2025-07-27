@@ -13,9 +13,10 @@ import (
 
 func TestNewCalendar(t *testing.T) {
 	// @@@ html 내용이 테스트 시점에 따라 바뀌므로 다른 테스트 방식 고려 필요 @@@
-	// Test: add a event to Google calendar
+	// Test: create calendar api client
 	srv, err := NewCalendar()
 	require.NoError(t, err)
+	// Test: add a event to Google calendar
 	err = TestCalendar(srv)
 	require.NoError(t, err)
 	// require.Error(t, err)
@@ -34,6 +35,15 @@ func TestNewCalendar(t *testing.T) {
 	dbQueries := database.New(db)
 	events, err := dbQueries.GetEventsOnGoingAndSites(context.Background())
 	require.NoError(t, err)
-	err = AddEvent(srv, events[0])
+	err = AddEvent(srv, Event{
+		Name:     events[1].Name,
+		Tag:      events[1].Tag,
+		TagText:  events[1].TagText,
+		StartsAt: events[1].StartsAt,
+		EndsAt:   events[1].EndsAt,
+		EventUrl: events[1].EventUrl,
+		SiteName: events[1].SiteName,
+		SiteUrl:  events[1].SiteUrl,
+	})
 	require.NoError(t, err)
 }

@@ -7,13 +7,13 @@ package calendar
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"time"
 
-	"github.com/paokimsiwoong/game_event_tracker/internal/database"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/calendar/v3"
@@ -122,6 +122,7 @@ func (s *savingTokenSource) Token() (*oauth2.Token, error) {
 	return t, err
 }
 
+// Google Calender API client를 생성하는 함수
 func NewCalendar() (*calendar.Service, error) {
 	// 1. 인증 정보 로드
 	b, err := os.ReadFile(clientSecretFilePath)
@@ -194,7 +195,21 @@ func NewCalendar() (*calendar.Service, error) {
 	return srv, nil
 }
 
-func AddEvent(srv *calendar.Service, data database.GetEventsOnGoingAndSitesRow) error {
+// AddEvent에 입력되는 이벤트 데이터를 담는 구조체
+// @@@ internal/database의 자동생성된 구조체를 쓰는 대신 여기서 구조체를 정의해서 편하게 수정 가능하도록 하기
+type Event struct {
+	Name     string
+	Tag      int32
+	TagText  string
+	StartsAt sql.NullTime
+	EndsAt   sql.NullTime
+	EventUrl string
+	SiteName string
+	SiteUrl  string
+}
+
+// 이벤트 데이터를 받아 구글 캘린더에 일정을 추가하는 함수
+func AddEvent(srv *calendar.Service, data Event) error {
 	start := data.StartsAt.Time.Format(time.RFC3339)
 	var end string
 	if data.EndsAt.Valid {
@@ -203,10 +218,12 @@ func AddEvent(srv *calendar.Service, data database.GetEventsOnGoingAndSitesRow) 
 		end = data.StartsAt.Time.Add(time.Hour).Format(time.RFC3339)
 	}
 
+	name := "(" + data.SiteName + ") " + data.TagText
+
 	desc := data.Name + " (" + data.EventUrl + ")"
 
 	event := &calendar.Event{
-		Summary:     data.TagText,
+		Summary:     name,
 		Location:    "서울",
 		Description: desc,
 		Start: &calendar.EventDateTime{
