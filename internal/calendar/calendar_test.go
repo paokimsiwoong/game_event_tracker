@@ -35,7 +35,7 @@ func TestNewCalendar(t *testing.T) {
 	dbQueries := database.New(db)
 	events, err := dbQueries.GetEventsOnGoingAndSites(context.Background())
 	require.NoError(t, err)
-	err = AddEvent(srv, Event{
+	e := &Event{
 		Name:     events[1].Name,
 		Tag:      events[1].Tag,
 		TagText:  events[1].TagText,
@@ -44,6 +44,8 @@ func TestNewCalendar(t *testing.T) {
 		EventUrl: events[1].EventUrl,
 		SiteName: events[1].SiteName,
 		SiteUrl:  events[1].SiteUrl,
-	})
+	}
+	calendarID := "primary"
+	err = AddEvent(srv, calendarID, e)
 	require.NoError(t, err)
 }

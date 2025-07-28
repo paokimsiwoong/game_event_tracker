@@ -17,6 +17,7 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/calendar/v3"
+	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
 )
 
@@ -198,18 +199,19 @@ func NewCalendar() (*calendar.Service, error) {
 // AddEvent에 입력되는 이벤트 데이터를 담는 구조체
 // @@@ internal/database의 자동생성된 구조체를 쓰는 대신 여기서 구조체를 정의해서 편하게 수정 가능하도록 하기
 type Event struct {
-	Name     string
-	Tag      int32
-	TagText  string
-	StartsAt sql.NullTime
-	EndsAt   sql.NullTime
-	EventUrl string
-	SiteName string
-	SiteUrl  string
+	Name       string
+	Tag        int32
+	TagText    string
+	StartsAt   sql.NullTime
+	EndsAt     sql.NullTime
+	EventUrl   string
+	SiteName   string
+	SiteUrl    string
+	EventCalID string // google 캘린더에 저장될 때 생성되는 id를 저장하는 필드
 }
 
 // 이벤트 데이터를 받아 구글 캘린더에 일정을 추가하는 함수
-func AddEvent(srv *calendar.Service, data Event) error {
+func AddEvent(srv *calendar.Service, calendarID string, data *Event) error {
 	start := data.StartsAt.Time.Format(time.RFC3339)
 	var end string
 	if data.EndsAt.Valid {
@@ -236,15 +238,43 @@ func AddEvent(srv *calendar.Service, data Event) error {
 		},
 	}
 
-	calendarId := "primary"
-	event, err := srv.Events.Insert(calendarId, event).Do()
+	event, err := srv.Events.Insert(calendarID, event).Do()
 	if err != nil {
 		// log.Fatalf("일정 생성 실패: %v", err)
 		return fmt.Errorf("일정 생성 실패: %v", err)
 	}
 	fmt.Printf("이벤트 생성됨: %s\n", event.HtmlLink)
 
+	// srv.Events.Insert 호출 후 반환되는 event안에는 id 부분이 생성되어 있음
+	data.EventCalID = event.Id
+
 	return nil
+}
+
+// 해당 ID를 가진 이벤트가 구글 캘린더에 있는지 확인하는 함수
+func CheckEvent(srv *calendar.Service, calendarID string, data *Event) (bool, error) {
+	_, err := srv.Events.Get(calendarID, data.EventCalID).Do()
+	if err != nil {
+		// get 요청이 실패했을 때, 이벤트가 없어서 에러가 난건지, 그 외 이유인지 구분하기
+		if googleAPIErr, ok := err.(*googleapi.Error); ok && googleAPIErr.Code == 404 {
+			// @@@ err.(*googleapi.Error)는 type assertion
+			// @@@ // Get.Do()가 반환한 err은
+			// @@@ // Do 함수 내부에서 error 인터페이스를 구현하는 *googleapi.Error를 error로 반환한것
+			// @@@ // // ==> type assertion을 통해 underlying type인 *googleapi.Error로 형변환 가능
+			// 404 : Not Found
+			return false, nil
+		} else {
+			// 404(Not Found)가 아닌 이유로 이벤트 조회 자체가 실패한 경우
+			return false, err
+		}
+	}
+
+	return true, nil
+}
+
+// 이전에 추가한 이벤트를 구글 캘린더에서 삭제하는 함수
+func DeleteEvent(srv *calendar.Service, calendarID string, data *Event) error {
+	return srv.Events.Delete(calendarID, data.EventCalID).Do()
 }
 
 func TestCalendar(srv *calendar.Service) error {
