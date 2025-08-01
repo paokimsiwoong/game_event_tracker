@@ -50,6 +50,21 @@ SELECT * FROM events
 WHERE starts_at <= NOW() AND (ends_at IS NULL OR ends_at >= NOW())
 ORDER BY created_at;
 
+-- name: GetOldEvents :many
+SELECT * FROM events
+WHERE ends_at < NOW()
+ORDER BY created_at;
+
+-- name: SetEventCalID :exec
+UPDATE events
+SET updated_at = NOW(), event_cal_id = $1
+WHERE tag = $2 AND starts_at = $3 AND ends_at = $4;
+
+-- name: SetEventCalIDByID :exec
+UPDATE events
+SET updated_at = NOW(), event_cal_id = $1
+WHERE id = $2;
+
 -- name: DeleteEventByID :exec
 DELETE FROM events
 WHERE id = $1;

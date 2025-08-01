@@ -7,6 +7,7 @@ CREATE TABLE events (
     tag_text TEXT NOT NULL,
     starts_at TIMESTAMP WITH TIME ZONE,
     ends_at TIMESTAMP WITH TIME ZONE,
+    event_cal_id TEXT,
     names TEXT[] NOT NULL,
     posted_ats TIMESTAMP WITH TIME ZONE[] NOT NULL,
     post_urls TEXT[] NOT NULL,

@@ -35,7 +35,7 @@ posted_ats = array_append(posted_ats, $6),
 post_urls = array_append(post_urls, $7),
 post_ids = array_append(post_ids, $8),
 updated_at = NOW()
-RETURNING id, created_at, updated_at, tag, tag_text, starts_at, ends_at, names, posted_ats, post_urls, post_ids, site_id
+RETURNING id, created_at, updated_at, tag, tag_text, starts_at, ends_at, event_cal_id, names, posted_ats, post_urls, post_ids, site_id
 `
 
 type CreateEventParams struct {
@@ -71,6 +71,7 @@ func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (Event
 		&i.TagText,
 		&i.StartsAt,
 		&i.EndsAt,
+		&i.EventCalID,
 		pq.Array(&i.Names),
 		pq.Array(&i.PostedAts),
 		pq.Array(&i.PostUrls),
@@ -135,7 +136,7 @@ func (q *Queries) DeleteOldEvents(ctx context.Context) error {
 }
 
 const getEventByID = `-- name: GetEventByID :one
-SELECT id, created_at, updated_at, tag, tag_text, starts_at, ends_at, names, posted_ats, post_urls, post_ids, site_id FROM events
+SELECT id, created_at, updated_at, tag, tag_text, starts_at, ends_at, event_cal_id, names, posted_ats, post_urls, post_ids, site_id FROM events
 WHERE id = $1
 `
 
@@ -150,6 +151,7 @@ func (q *Queries) GetEventByID(ctx context.Context, id uuid.UUID) (Event, error)
 		&i.TagText,
 		&i.StartsAt,
 		&i.EndsAt,
+		&i.EventCalID,
 		pq.Array(&i.Names),
 		pq.Array(&i.PostedAts),
 		pq.Array(&i.PostUrls),
@@ -160,7 +162,7 @@ func (q *Queries) GetEventByID(ctx context.Context, id uuid.UUID) (Event, error)
 }
 
 const getEvents = `-- name: GetEvents :many
-SELECT id, created_at, updated_at, tag, tag_text, starts_at, ends_at, names, posted_ats, post_urls, post_ids, site_id FROM events
+SELECT id, created_at, updated_at, tag, tag_text, starts_at, ends_at, event_cal_id, names, posted_ats, post_urls, post_ids, site_id FROM events
 ORDER BY created_at
 `
 
@@ -181,6 +183,7 @@ func (q *Queries) GetEvents(ctx context.Context) ([]Event, error) {
 			&i.TagText,
 			&i.StartsAt,
 			&i.EndsAt,
+			&i.EventCalID,
 			pq.Array(&i.Names),
 			pq.Array(&i.PostedAts),
 			pq.Array(&i.PostUrls),
@@ -201,7 +204,7 @@ func (q *Queries) GetEvents(ctx context.Context) ([]Event, error) {
 }
 
 const getEventsBySiteID = `-- name: GetEventsBySiteID :many
-SELECT id, created_at, updated_at, tag, tag_text, starts_at, ends_at, names, posted_ats, post_urls, post_ids, site_id FROM events
+SELECT id, created_at, updated_at, tag, tag_text, starts_at, ends_at, event_cal_id, names, posted_ats, post_urls, post_ids, site_id FROM events
 WHERE site_id = $1
 ORDER BY created_at
 `
@@ -223,6 +226,7 @@ func (q *Queries) GetEventsBySiteID(ctx context.Context, siteID uuid.UUID) ([]Ev
 			&i.TagText,
 			&i.StartsAt,
 			&i.EndsAt,
+			&i.EventCalID,
 			pq.Array(&i.Names),
 			pq.Array(&i.PostedAts),
 			pq.Array(&i.PostUrls),
@@ -243,7 +247,7 @@ func (q *Queries) GetEventsBySiteID(ctx context.Context, siteID uuid.UUID) ([]Ev
 }
 
 const getEventsByTag = `-- name: GetEventsByTag :many
-SELECT id, created_at, updated_at, tag, tag_text, starts_at, ends_at, names, posted_ats, post_urls, post_ids, site_id FROM events
+SELECT id, created_at, updated_at, tag, tag_text, starts_at, ends_at, event_cal_id, names, posted_ats, post_urls, post_ids, site_id FROM events
 WHERE tag = $1
 ORDER BY created_at
 `
@@ -265,6 +269,7 @@ func (q *Queries) GetEventsByTag(ctx context.Context, tag int32) ([]Event, error
 			&i.TagText,
 			&i.StartsAt,
 			&i.EndsAt,
+			&i.EventCalID,
 			pq.Array(&i.Names),
 			pq.Array(&i.PostedAts),
 			pq.Array(&i.PostUrls),
@@ -285,7 +290,7 @@ func (q *Queries) GetEventsByTag(ctx context.Context, tag int32) ([]Event, error
 }
 
 const getEventsByTagText = `-- name: GetEventsByTagText :many
-SELECT id, created_at, updated_at, tag, tag_text, starts_at, ends_at, names, posted_ats, post_urls, post_ids, site_id FROM events
+SELECT id, created_at, updated_at, tag, tag_text, starts_at, ends_at, event_cal_id, names, posted_ats, post_urls, post_ids, site_id FROM events
 WHERE tag_text = $1
 ORDER BY created_at
 `
@@ -307,6 +312,7 @@ func (q *Queries) GetEventsByTagText(ctx context.Context, tagText string) ([]Eve
 			&i.TagText,
 			&i.StartsAt,
 			&i.EndsAt,
+			&i.EventCalID,
 			pq.Array(&i.Names),
 			pq.Array(&i.PostedAts),
 			pq.Array(&i.PostUrls),
@@ -327,7 +333,7 @@ func (q *Queries) GetEventsByTagText(ctx context.Context, tagText string) ([]Eve
 }
 
 const getEventsOnGoing = `-- name: GetEventsOnGoing :many
-SELECT id, created_at, updated_at, tag, tag_text, starts_at, ends_at, names, posted_ats, post_urls, post_ids, site_id FROM events
+SELECT id, created_at, updated_at, tag, tag_text, starts_at, ends_at, event_cal_id, names, posted_ats, post_urls, post_ids, site_id FROM events
 WHERE starts_at <= NOW() AND (ends_at IS NULL OR ends_at >= NOW())
 ORDER BY created_at
 `
@@ -349,6 +355,50 @@ func (q *Queries) GetEventsOnGoing(ctx context.Context) ([]Event, error) {
 			&i.TagText,
 			&i.StartsAt,
 			&i.EndsAt,
+			&i.EventCalID,
+			pq.Array(&i.Names),
+			pq.Array(&i.PostedAts),
+			pq.Array(&i.PostUrls),
+			pq.Array(&i.PostIds),
+			&i.SiteID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getOldEvents = `-- name: GetOldEvents :many
+SELECT id, created_at, updated_at, tag, tag_text, starts_at, ends_at, event_cal_id, names, posted_ats, post_urls, post_ids, site_id FROM events
+WHERE ends_at < NOW()
+ORDER BY created_at
+`
+
+func (q *Queries) GetOldEvents(ctx context.Context) ([]Event, error) {
+	rows, err := q.db.QueryContext(ctx, getOldEvents)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Event
+	for rows.Next() {
+		var i Event
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Tag,
+			&i.TagText,
+			&i.StartsAt,
+			&i.EndsAt,
+			&i.EventCalID,
 			pq.Array(&i.Names),
 			pq.Array(&i.PostedAts),
 			pq.Array(&i.PostUrls),
@@ -374,5 +424,44 @@ DELETE FROM events
 
 func (q *Queries) ResetEvents(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, resetEvents)
+	return err
+}
+
+const setEventCalID = `-- name: SetEventCalID :exec
+UPDATE events
+SET updated_at = NOW(), event_cal_id = $1
+WHERE tag = $2 AND starts_at = $3 AND ends_at = $4
+`
+
+type SetEventCalIDParams struct {
+	EventCalID sql.NullString
+	Tag        int32
+	StartsAt   sql.NullTime
+	EndsAt     sql.NullTime
+}
+
+func (q *Queries) SetEventCalID(ctx context.Context, arg SetEventCalIDParams) error {
+	_, err := q.db.ExecContext(ctx, setEventCalID,
+		arg.EventCalID,
+		arg.Tag,
+		arg.StartsAt,
+		arg.EndsAt,
+	)
+	return err
+}
+
+const setEventCalIDByID = `-- name: SetEventCalIDByID :exec
+UPDATE events
+SET updated_at = NOW(), event_cal_id = $1
+WHERE id = $2
+`
+
+type SetEventCalIDByIDParams struct {
+	EventCalID sql.NullString
+	ID         uuid.UUID
+}
+
+func (q *Queries) SetEventCalIDByID(ctx context.Context, arg SetEventCalIDByIDParams) error {
+	_, err := q.db.ExecContext(ctx, setEventCalIDByID, arg.EventCalID, arg.ID)
 	return err
 }

@@ -12,18 +12,19 @@ import (
 )
 
 type Event struct {
-	ID        uuid.UUID
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Tag       int32
-	TagText   string
-	StartsAt  sql.NullTime
-	EndsAt    sql.NullTime
-	Names     []string
-	PostedAts []time.Time
-	PostUrls  []string
-	PostIds   []uuid.UUID
-	SiteID    uuid.UUID
+	ID         uuid.UUID
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	Tag        int32
+	TagText    string
+	StartsAt   sql.NullTime
+	EndsAt     sql.NullTime
+	EventCalID sql.NullString
+	Names      []string
+	PostedAts  []time.Time
+	PostUrls   []string
+	PostIds    []uuid.UUID
+	SiteID     uuid.UUID
 }
 
 type Post struct {
