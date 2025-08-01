@@ -46,14 +46,25 @@ WHERE site_id = $1
 ORDER BY created_at;
 
 -- name: GetEventsOnGoing :many
-SELECT * FROM events
-WHERE starts_at <= NOW() AND (ends_at IS NULL OR ends_at >= NOW())
-ORDER BY created_at;
+SELECT events.*, sites.name AS site_name, sites.url AS site_url FROM events
+INNER JOIN sites
+ON events.site_id = sites.id
+WHERE events.starts_at <= NOW() AND (events.ends_at IS NULL OR events.ends_at >= NOW())
+ORDER BY events.starts_at DESC, events.ends_at DESC;
+
+-- name: GetEventsWithinGivenPeriod :many
+SELECT events.*, sites.name AS site_name, sites.url AS site_url FROM events
+INNER JOIN sites
+ON events.site_id = sites.id
+WHERE events.ends_at IS NULL OR events.ends_at >= $1
+ORDER BY events.starts_at DESC, events.ends_at DESC;
 
 -- name: GetOldEvents :many
-SELECT * FROM events
-WHERE ends_at < NOW()
-ORDER BY created_at;
+SELECT events.*, sites.name AS site_name, sites.url AS site_url FROM events
+INNER JOIN sites
+ON events.site_id = sites.id
+WHERE events.ends_at < NOW()
+ORDER BY events.starts_at DESC, events.ends_at DESC;
 
 -- name: SetEventCalID :exec
 UPDATE events

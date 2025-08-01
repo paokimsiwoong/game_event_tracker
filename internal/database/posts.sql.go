@@ -548,6 +548,69 @@ func (q *Queries) GetPostsOnGoingAndSites(ctx context.Context) ([]GetPostsOnGoin
 	return items, nil
 }
 
+const getPostsWithinGivenPeriod = `-- name: GetPostsWithinGivenPeriod :many
+SELECT posts.id, posts.created_at, posts.updated_at, posts.name, posts.tag, posts.tag_text, posts.posted_at, posts.starts_at, posts.ends_at, posts.body, posts.post_url, posts.site_id, sites.name AS site_name, sites.url AS site_url FROM posts
+INNER JOIN sites
+ON posts.site_id = sites.id
+WHERE posts.ends_at IS NULL OR posts.ends_at >= $1
+ORDER BY posts.posted_at DESC, posts.starts_at DESC
+`
+
+type GetPostsWithinGivenPeriodRow struct {
+	ID        uuid.UUID
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Name      string
+	Tag       int32
+	TagText   string
+	PostedAt  time.Time
+	StartsAt  sql.NullTime
+	EndsAt    sql.NullTime
+	Body      string
+	PostUrl   string
+	SiteID    uuid.UUID
+	SiteName  string
+	SiteUrl   string
+}
+
+func (q *Queries) GetPostsWithinGivenPeriod(ctx context.Context, endsAt sql.NullTime) ([]GetPostsWithinGivenPeriodRow, error) {
+	rows, err := q.db.QueryContext(ctx, getPostsWithinGivenPeriod, endsAt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetPostsWithinGivenPeriodRow
+	for rows.Next() {
+		var i GetPostsWithinGivenPeriodRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Name,
+			&i.Tag,
+			&i.TagText,
+			&i.PostedAt,
+			&i.StartsAt,
+			&i.EndsAt,
+			&i.Body,
+			&i.PostUrl,
+			&i.SiteID,
+			&i.SiteName,
+			&i.SiteUrl,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const resetPosts = `-- name: ResetPosts :exec
 DELETE FROM posts
 `

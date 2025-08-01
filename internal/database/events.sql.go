@@ -8,6 +8,7 @@ package database
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -333,20 +334,40 @@ func (q *Queries) GetEventsByTagText(ctx context.Context, tagText string) ([]Eve
 }
 
 const getEventsOnGoing = `-- name: GetEventsOnGoing :many
-SELECT id, created_at, updated_at, tag, tag_text, starts_at, ends_at, event_cal_id, names, posted_ats, post_urls, post_ids, site_id FROM events
-WHERE starts_at <= NOW() AND (ends_at IS NULL OR ends_at >= NOW())
-ORDER BY created_at
+SELECT events.id, events.created_at, events.updated_at, events.tag, events.tag_text, events.starts_at, events.ends_at, events.event_cal_id, events.names, events.posted_ats, events.post_urls, events.post_ids, events.site_id, sites.name AS site_name, sites.url AS site_url FROM events
+INNER JOIN sites
+ON events.site_id = sites.id
+WHERE events.starts_at <= NOW() AND (events.ends_at IS NULL OR events.ends_at >= NOW())
+ORDER BY events.starts_at DESC, events.ends_at DESC
 `
 
-func (q *Queries) GetEventsOnGoing(ctx context.Context) ([]Event, error) {
+type GetEventsOnGoingRow struct {
+	ID         uuid.UUID
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	Tag        int32
+	TagText    string
+	StartsAt   sql.NullTime
+	EndsAt     sql.NullTime
+	EventCalID sql.NullString
+	Names      []string
+	PostedAts  []time.Time
+	PostUrls   []string
+	PostIds    []uuid.UUID
+	SiteID     uuid.UUID
+	SiteName   string
+	SiteUrl    string
+}
+
+func (q *Queries) GetEventsOnGoing(ctx context.Context) ([]GetEventsOnGoingRow, error) {
 	rows, err := q.db.QueryContext(ctx, getEventsOnGoing)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Event
+	var items []GetEventsOnGoingRow
 	for rows.Next() {
-		var i Event
+		var i GetEventsOnGoingRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.CreatedAt,
@@ -361,6 +382,73 @@ func (q *Queries) GetEventsOnGoing(ctx context.Context) ([]Event, error) {
 			pq.Array(&i.PostUrls),
 			pq.Array(&i.PostIds),
 			&i.SiteID,
+			&i.SiteName,
+			&i.SiteUrl,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getEventsWithinGivenPeriod = `-- name: GetEventsWithinGivenPeriod :many
+SELECT events.id, events.created_at, events.updated_at, events.tag, events.tag_text, events.starts_at, events.ends_at, events.event_cal_id, events.names, events.posted_ats, events.post_urls, events.post_ids, events.site_id, sites.name AS site_name, sites.url AS site_url FROM events
+INNER JOIN sites
+ON events.site_id = sites.id
+WHERE events.ends_at IS NULL OR events.ends_at >= $1
+ORDER BY events.starts_at DESC, events.ends_at DESC
+`
+
+type GetEventsWithinGivenPeriodRow struct {
+	ID         uuid.UUID
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	Tag        int32
+	TagText    string
+	StartsAt   sql.NullTime
+	EndsAt     sql.NullTime
+	EventCalID sql.NullString
+	Names      []string
+	PostedAts  []time.Time
+	PostUrls   []string
+	PostIds    []uuid.UUID
+	SiteID     uuid.UUID
+	SiteName   string
+	SiteUrl    string
+}
+
+func (q *Queries) GetEventsWithinGivenPeriod(ctx context.Context, endsAt sql.NullTime) ([]GetEventsWithinGivenPeriodRow, error) {
+	rows, err := q.db.QueryContext(ctx, getEventsWithinGivenPeriod, endsAt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetEventsWithinGivenPeriodRow
+	for rows.Next() {
+		var i GetEventsWithinGivenPeriodRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Tag,
+			&i.TagText,
+			&i.StartsAt,
+			&i.EndsAt,
+			&i.EventCalID,
+			pq.Array(&i.Names),
+			pq.Array(&i.PostedAts),
+			pq.Array(&i.PostUrls),
+			pq.Array(&i.PostIds),
+			&i.SiteID,
+			&i.SiteName,
+			&i.SiteUrl,
 		); err != nil {
 			return nil, err
 		}
@@ -376,20 +464,40 @@ func (q *Queries) GetEventsOnGoing(ctx context.Context) ([]Event, error) {
 }
 
 const getOldEvents = `-- name: GetOldEvents :many
-SELECT id, created_at, updated_at, tag, tag_text, starts_at, ends_at, event_cal_id, names, posted_ats, post_urls, post_ids, site_id FROM events
-WHERE ends_at < NOW()
-ORDER BY created_at
+SELECT events.id, events.created_at, events.updated_at, events.tag, events.tag_text, events.starts_at, events.ends_at, events.event_cal_id, events.names, events.posted_ats, events.post_urls, events.post_ids, events.site_id, sites.name AS site_name, sites.url AS site_url FROM events
+INNER JOIN sites
+ON events.site_id = sites.id
+WHERE events.ends_at < NOW()
+ORDER BY events.starts_at DESC, events.ends_at DESC
 `
 
-func (q *Queries) GetOldEvents(ctx context.Context) ([]Event, error) {
+type GetOldEventsRow struct {
+	ID         uuid.UUID
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	Tag        int32
+	TagText    string
+	StartsAt   sql.NullTime
+	EndsAt     sql.NullTime
+	EventCalID sql.NullString
+	Names      []string
+	PostedAts  []time.Time
+	PostUrls   []string
+	PostIds    []uuid.UUID
+	SiteID     uuid.UUID
+	SiteName   string
+	SiteUrl    string
+}
+
+func (q *Queries) GetOldEvents(ctx context.Context) ([]GetOldEventsRow, error) {
 	rows, err := q.db.QueryContext(ctx, getOldEvents)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Event
+	var items []GetOldEventsRow
 	for rows.Next() {
-		var i Event
+		var i GetOldEventsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.CreatedAt,
@@ -404,6 +512,8 @@ func (q *Queries) GetOldEvents(ctx context.Context) ([]Event, error) {
 			pq.Array(&i.PostUrls),
 			pq.Array(&i.PostIds),
 			&i.SiteID,
+			&i.SiteName,
+			&i.SiteUrl,
 		); err != nil {
 			return nil, err
 		}
