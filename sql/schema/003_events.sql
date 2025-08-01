@@ -3,19 +3,20 @@ CREATE TABLE events (
     id UUID PRIMARY KEY,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    name TEXT NOT NULL,
     tag INTEGER NOT NULL,
     tag_text TEXT NOT NULL,
-    posted_at TIMESTAMP WITH TIME ZONE,
     starts_at TIMESTAMP WITH TIME ZONE,
     ends_at TIMESTAMP WITH TIME ZONE,
-    body TEXT NOT NULL,
-    event_url TEXT NOT NULL,
+    names TEXT[] NOT NULL,
+    posted_ats TIMESTAMP WITH TIME ZONE[] NOT NULL,
+    post_urls TEXT[] NOT NULL,
+    post_ids UUID[] NOT NULL,
     site_id UUID NOT NULL,
     CONSTRAINT fk_sites
     FOREIGN KEY (site_id)
     REFERENCES sites(id)
-    ON DELETE CASCADE 
+    ON DELETE CASCADE,
+    UNIQUE(tag, starts_at, ends_at) 
 );
 
 

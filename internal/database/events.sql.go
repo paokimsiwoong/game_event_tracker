@@ -8,13 +8,13 @@ package database
 import (
 	"context"
 	"database/sql"
-	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 const createEvent = `-- name: CreateEvent :one
-INSERT INTO events (id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, event_url, site_id)
+INSERT INTO events (id, created_at, updated_at, tag, tag_text, starts_at, ends_at, names, posted_ats, post_urls, post_ids, site_id)
 VALUES (
     gen_random_uuid(),
     NOW(),
@@ -23,37 +23,43 @@ VALUES (
     $2,
     $3,
     $4,
-    $5,
-    $6,
-    $7,
-    $8,
+    ARRAY[$5],
+    ARRAY[$6],
+    ARRAY[$7],
+    ARRAY[$8],
     $9
 )
-RETURNING id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, event_url, site_id
+ON CONFLICT (tag, starts_at, ends_at)
+DO UPDATE SET names = array_append(names, $5), 
+posted_ats = array_append(posted_ats, $6),
+post_urls = array_append(post_urls, $7),
+post_ids = array_append(post_ids, $8),
+updated_at = NOW()
+RETURNING id, created_at, updated_at, tag, tag_text, starts_at, ends_at, names, posted_ats, post_urls, post_ids, site_id
 `
 
 type CreateEventParams struct {
-	Name     string
 	Tag      int32
 	TagText  string
-	PostedAt sql.NullTime
 	StartsAt sql.NullTime
 	EndsAt   sql.NullTime
-	Body     string
-	EventUrl string
+	Column5  interface{}
+	Column6  interface{}
+	Column7  interface{}
+	Column8  interface{}
 	SiteID   uuid.UUID
 }
 
 func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (Event, error) {
 	row := q.db.QueryRowContext(ctx, createEvent,
-		arg.Name,
 		arg.Tag,
 		arg.TagText,
-		arg.PostedAt,
 		arg.StartsAt,
 		arg.EndsAt,
-		arg.Body,
-		arg.EventUrl,
+		arg.Column5,
+		arg.Column6,
+		arg.Column7,
+		arg.Column8,
 		arg.SiteID,
 	)
 	var i Event
@@ -61,66 +67,14 @@ func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (Event
 		&i.ID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.Name,
 		&i.Tag,
 		&i.TagText,
-		&i.PostedAt,
 		&i.StartsAt,
 		&i.EndsAt,
-		&i.Body,
-		&i.EventUrl,
-		&i.SiteID,
-	)
-	return i, err
-}
-
-const createEventWithNull = `-- name: CreateEventWithNull :one
-INSERT INTO events (id, created_at, updated_at, name, tag, tag_text, body, event_url, site_id)
-VALUES (
-    gen_random_uuid(),
-    NOW(),
-    NOW(),
-    $1,
-    $2,
-    $3,
-    $4,
-    $5,
-    $6
-)
-RETURNING id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, event_url, site_id
-`
-
-type CreateEventWithNullParams struct {
-	Name     string
-	Tag      int32
-	TagText  string
-	Body     string
-	EventUrl string
-	SiteID   uuid.UUID
-}
-
-func (q *Queries) CreateEventWithNull(ctx context.Context, arg CreateEventWithNullParams) (Event, error) {
-	row := q.db.QueryRowContext(ctx, createEventWithNull,
-		arg.Name,
-		arg.Tag,
-		arg.TagText,
-		arg.Body,
-		arg.EventUrl,
-		arg.SiteID,
-	)
-	var i Event
-	err := row.Scan(
-		&i.ID,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.Name,
-		&i.Tag,
-		&i.TagText,
-		&i.PostedAt,
-		&i.StartsAt,
-		&i.EndsAt,
-		&i.Body,
-		&i.EventUrl,
+		pq.Array(&i.Names),
+		pq.Array(&i.PostedAts),
+		pq.Array(&i.PostUrls),
+		pq.Array(&i.PostIds),
 		&i.SiteID,
 	)
 	return i, err
@@ -136,6 +90,17 @@ func (q *Queries) DeleteEventByID(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const deleteEventBySiteName = `-- name: DeleteEventBySiteName :exec
+DELETE FROM events
+USING sites
+WHERE events.site_id = sites.id AND sites.name = $1
+`
+
+func (q *Queries) DeleteEventBySiteName(ctx context.Context, name string) error {
+	_, err := q.db.ExecContext(ctx, deleteEventBySiteName, name)
+	return err
+}
+
 const deleteEventsBySiteID = `-- name: DeleteEventsBySiteID :exec
 DELETE FROM events
 WHERE site_id = $1
@@ -143,17 +108,6 @@ WHERE site_id = $1
 
 func (q *Queries) DeleteEventsBySiteID(ctx context.Context, siteID uuid.UUID) error {
 	_, err := q.db.ExecContext(ctx, deleteEventsBySiteID, siteID)
-	return err
-}
-
-const deleteEventsBySiteName = `-- name: DeleteEventsBySiteName :exec
-DELETE FROM events
-USING sites
-WHERE events.site_id = sites.id AND sites.name = $1
-`
-
-func (q *Queries) DeleteEventsBySiteName(ctx context.Context, name string) error {
-	_, err := q.db.ExecContext(ctx, deleteEventsBySiteName, name)
 	return err
 }
 
@@ -181,7 +135,7 @@ func (q *Queries) DeleteOldEvents(ctx context.Context) error {
 }
 
 const getEventByID = `-- name: GetEventByID :one
-SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, event_url, site_id FROM events
+SELECT id, created_at, updated_at, tag, tag_text, starts_at, ends_at, names, posted_ats, post_urls, post_ids, site_id FROM events
 WHERE id = $1
 `
 
@@ -192,21 +146,21 @@ func (q *Queries) GetEventByID(ctx context.Context, id uuid.UUID) (Event, error)
 		&i.ID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.Name,
 		&i.Tag,
 		&i.TagText,
-		&i.PostedAt,
 		&i.StartsAt,
 		&i.EndsAt,
-		&i.Body,
-		&i.EventUrl,
+		pq.Array(&i.Names),
+		pq.Array(&i.PostedAts),
+		pq.Array(&i.PostUrls),
+		pq.Array(&i.PostIds),
 		&i.SiteID,
 	)
 	return i, err
 }
 
 const getEvents = `-- name: GetEvents :many
-SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, event_url, site_id FROM events
+SELECT id, created_at, updated_at, tag, tag_text, starts_at, ends_at, names, posted_ats, post_urls, post_ids, site_id FROM events
 ORDER BY created_at
 `
 
@@ -223,166 +177,14 @@ func (q *Queries) GetEvents(ctx context.Context) ([]Event, error) {
 			&i.ID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
-			&i.Name,
 			&i.Tag,
 			&i.TagText,
-			&i.PostedAt,
 			&i.StartsAt,
 			&i.EndsAt,
-			&i.Body,
-			&i.EventUrl,
-			&i.SiteID,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getEventsAndSites = `-- name: GetEventsAndSites :many
-SELECT events.id, events.created_at, events.updated_at, events.name, events.tag, events.tag_text, events.posted_at, events.starts_at, events.ends_at, events.body, events.event_url, events.site_id, sites.name AS site_name, sites.url AS site_url FROM events
-INNER JOIN sites
-ON events.site_id = sites.id
-ORDER BY events.posted_at DESC, events.starts_at DESC
-`
-
-type GetEventsAndSitesRow struct {
-	ID        uuid.UUID
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Name      string
-	Tag       int32
-	TagText   string
-	PostedAt  sql.NullTime
-	StartsAt  sql.NullTime
-	EndsAt    sql.NullTime
-	Body      string
-	EventUrl  string
-	SiteID    uuid.UUID
-	SiteName  string
-	SiteUrl   string
-}
-
-func (q *Queries) GetEventsAndSites(ctx context.Context) ([]GetEventsAndSitesRow, error) {
-	rows, err := q.db.QueryContext(ctx, getEventsAndSites)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetEventsAndSitesRow
-	for rows.Next() {
-		var i GetEventsAndSitesRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.Name,
-			&i.Tag,
-			&i.TagText,
-			&i.PostedAt,
-			&i.StartsAt,
-			&i.EndsAt,
-			&i.Body,
-			&i.EventUrl,
-			&i.SiteID,
-			&i.SiteName,
-			&i.SiteUrl,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getEventsByName = `-- name: GetEventsByName :many
-SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, event_url, site_id FROM events
-WHERE name = $1
-ORDER BY created_at
-`
-
-func (q *Queries) GetEventsByName(ctx context.Context, name string) ([]Event, error) {
-	rows, err := q.db.QueryContext(ctx, getEventsByName, name)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Event
-	for rows.Next() {
-		var i Event
-		if err := rows.Scan(
-			&i.ID,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.Name,
-			&i.Tag,
-			&i.TagText,
-			&i.PostedAt,
-			&i.StartsAt,
-			&i.EndsAt,
-			&i.Body,
-			&i.EventUrl,
-			&i.SiteID,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getEventsByNameAndPostedAtAndSiteID = `-- name: GetEventsByNameAndPostedAtAndSiteID :many
-SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, event_url, site_id FROM events
-WHERE name = $1 AND posted_at = $2 AND site_id = $3
-ORDER BY created_at
-`
-
-type GetEventsByNameAndPostedAtAndSiteIDParams struct {
-	Name     string
-	PostedAt sql.NullTime
-	SiteID   uuid.UUID
-}
-
-func (q *Queries) GetEventsByNameAndPostedAtAndSiteID(ctx context.Context, arg GetEventsByNameAndPostedAtAndSiteIDParams) ([]Event, error) {
-	rows, err := q.db.QueryContext(ctx, getEventsByNameAndPostedAtAndSiteID, arg.Name, arg.PostedAt, arg.SiteID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Event
-	for rows.Next() {
-		var i Event
-		if err := rows.Scan(
-			&i.ID,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.Name,
-			&i.Tag,
-			&i.TagText,
-			&i.PostedAt,
-			&i.StartsAt,
-			&i.EndsAt,
-			&i.Body,
-			&i.EventUrl,
+			pq.Array(&i.Names),
+			pq.Array(&i.PostedAts),
+			pq.Array(&i.PostUrls),
+			pq.Array(&i.PostIds),
 			&i.SiteID,
 		); err != nil {
 			return nil, err
@@ -399,7 +201,7 @@ func (q *Queries) GetEventsByNameAndPostedAtAndSiteID(ctx context.Context, arg G
 }
 
 const getEventsBySiteID = `-- name: GetEventsBySiteID :many
-SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, event_url, site_id FROM events
+SELECT id, created_at, updated_at, tag, tag_text, starts_at, ends_at, names, posted_ats, post_urls, post_ids, site_id FROM events
 WHERE site_id = $1
 ORDER BY created_at
 `
@@ -417,14 +219,98 @@ func (q *Queries) GetEventsBySiteID(ctx context.Context, siteID uuid.UUID) ([]Ev
 			&i.ID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
-			&i.Name,
 			&i.Tag,
 			&i.TagText,
-			&i.PostedAt,
 			&i.StartsAt,
 			&i.EndsAt,
-			&i.Body,
-			&i.EventUrl,
+			pq.Array(&i.Names),
+			pq.Array(&i.PostedAts),
+			pq.Array(&i.PostUrls),
+			pq.Array(&i.PostIds),
+			&i.SiteID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getEventsByTag = `-- name: GetEventsByTag :many
+SELECT id, created_at, updated_at, tag, tag_text, starts_at, ends_at, names, posted_ats, post_urls, post_ids, site_id FROM events
+WHERE tag = $1
+ORDER BY created_at
+`
+
+func (q *Queries) GetEventsByTag(ctx context.Context, tag int32) ([]Event, error) {
+	rows, err := q.db.QueryContext(ctx, getEventsByTag, tag)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Event
+	for rows.Next() {
+		var i Event
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Tag,
+			&i.TagText,
+			&i.StartsAt,
+			&i.EndsAt,
+			pq.Array(&i.Names),
+			pq.Array(&i.PostedAts),
+			pq.Array(&i.PostUrls),
+			pq.Array(&i.PostIds),
+			&i.SiteID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getEventsByTagText = `-- name: GetEventsByTagText :many
+SELECT id, created_at, updated_at, tag, tag_text, starts_at, ends_at, names, posted_ats, post_urls, post_ids, site_id FROM events
+WHERE tag_text = $1
+ORDER BY created_at
+`
+
+func (q *Queries) GetEventsByTagText(ctx context.Context, tagText string) ([]Event, error) {
+	rows, err := q.db.QueryContext(ctx, getEventsByTagText, tagText)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Event
+	for rows.Next() {
+		var i Event
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Tag,
+			&i.TagText,
+			&i.StartsAt,
+			&i.EndsAt,
+			pq.Array(&i.Names),
+			pq.Array(&i.PostedAts),
+			pq.Array(&i.PostUrls),
+			pq.Array(&i.PostIds),
 			&i.SiteID,
 		); err != nil {
 			return nil, err
@@ -441,8 +327,8 @@ func (q *Queries) GetEventsBySiteID(ctx context.Context, siteID uuid.UUID) ([]Ev
 }
 
 const getEventsOnGoing = `-- name: GetEventsOnGoing :many
-SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, event_url, site_id FROM events
-WHERE starts_at <= NOW() and ends_at >= NOW()
+SELECT id, created_at, updated_at, tag, tag_text, starts_at, ends_at, names, posted_ats, post_urls, post_ids, site_id FROM events
+WHERE starts_at <= NOW() AND (ends_at IS NULL OR ends_at >= NOW())
 ORDER BY created_at
 `
 
@@ -459,78 +345,15 @@ func (q *Queries) GetEventsOnGoing(ctx context.Context) ([]Event, error) {
 			&i.ID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
-			&i.Name,
 			&i.Tag,
 			&i.TagText,
-			&i.PostedAt,
 			&i.StartsAt,
 			&i.EndsAt,
-			&i.Body,
-			&i.EventUrl,
+			pq.Array(&i.Names),
+			pq.Array(&i.PostedAts),
+			pq.Array(&i.PostUrls),
+			pq.Array(&i.PostIds),
 			&i.SiteID,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getEventsOnGoingAndSites = `-- name: GetEventsOnGoingAndSites :many
-SELECT events.id, events.created_at, events.updated_at, events.name, events.tag, events.tag_text, events.posted_at, events.starts_at, events.ends_at, events.body, events.event_url, events.site_id, sites.name AS site_name, sites.url AS site_url FROM events
-INNER JOIN sites
-ON events.site_id = sites.id
-WHERE events.starts_at <= NOW() AND (events.ends_at IS NULL OR events.ends_at >= NOW())
-ORDER BY events.posted_at DESC, events.starts_at DESC
-`
-
-type GetEventsOnGoingAndSitesRow struct {
-	ID        uuid.UUID
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Name      string
-	Tag       int32
-	TagText   string
-	PostedAt  sql.NullTime
-	StartsAt  sql.NullTime
-	EndsAt    sql.NullTime
-	Body      string
-	EventUrl  string
-	SiteID    uuid.UUID
-	SiteName  string
-	SiteUrl   string
-}
-
-func (q *Queries) GetEventsOnGoingAndSites(ctx context.Context) ([]GetEventsOnGoingAndSitesRow, error) {
-	rows, err := q.db.QueryContext(ctx, getEventsOnGoingAndSites)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetEventsOnGoingAndSitesRow
-	for rows.Next() {
-		var i GetEventsOnGoingAndSitesRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.Name,
-			&i.Tag,
-			&i.TagText,
-			&i.PostedAt,
-			&i.StartsAt,
-			&i.EndsAt,
-			&i.Body,
-			&i.EventUrl,
-			&i.SiteID,
-			&i.SiteName,
-			&i.SiteUrl,
 		); err != nil {
 			return nil, err
 		}
@@ -551,28 +374,5 @@ DELETE FROM events
 
 func (q *Queries) ResetEvents(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, resetEvents)
-	return err
-}
-
-const setEventDates = `-- name: SetEventDates :exec
-UPDATE events
-SET updated_at = NOW(), posted_at = $1, starts_at = $2, ends_at = $3
-WHERE id = $4
-`
-
-type SetEventDatesParams struct {
-	PostedAt sql.NullTime
-	StartsAt sql.NullTime
-	EndsAt   sql.NullTime
-	ID       uuid.UUID
-}
-
-func (q *Queries) SetEventDates(ctx context.Context, arg SetEventDatesParams) error {
-	_, err := q.db.ExecContext(ctx, setEventDates,
-		arg.PostedAt,
-		arg.StartsAt,
-		arg.EndsAt,
-		arg.ID,
-	)
 	return err
 }

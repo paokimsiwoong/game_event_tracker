@@ -15,14 +15,29 @@ type Event struct {
 	ID        uuid.UUID
 	CreatedAt time.Time
 	UpdatedAt time.Time
+	Tag       int32
+	TagText   string
+	StartsAt  sql.NullTime
+	EndsAt    sql.NullTime
+	Names     []string
+	PostedAts []time.Time
+	PostUrls  []string
+	PostIds   []uuid.UUID
+	SiteID    uuid.UUID
+}
+
+type Post struct {
+	ID        uuid.UUID
+	CreatedAt time.Time
+	UpdatedAt time.Time
 	Name      string
 	Tag       int32
 	TagText   string
-	PostedAt  sql.NullTime
+	PostedAt  time.Time
 	StartsAt  sql.NullTime
 	EndsAt    sql.NullTime
 	Body      string
-	EventUrl  string
+	PostUrl   string
 	SiteID    uuid.UUID
 }
 

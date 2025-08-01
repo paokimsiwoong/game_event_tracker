@@ -59,15 +59,12 @@ func HandlerCrawl(s *State, cmd Command) error {
 	var count int
 
 	for _, p := range parsed {
-		if es, err := s.PtrDB.GetEventsByNameAndPostedAtAndSiteID(context.Background(), database.GetEventsByNameAndPostedAtAndSiteIDParams{
-			Name: p.Title,
-			PostedAt: sql.NullTime{
-				Time:  p.PostedAt,
-				Valid: true,
-			},
-			SiteID: site.ID,
-		}); err == nil && len(es) != 0 { // 기존에 등록된 이벤트일 경우
-			log.Printf("Event %s posted at %v has already been registered\n", p.Title, p.PostedAt)
+		if posts, err := s.PtrDB.GetPostsByNameAndPostedAtAndSiteID(context.Background(), database.GetPostsByNameAndPostedAtAndSiteIDParams{
+			Name:     p.Title,
+			PostedAt: p.PostedAt,
+			SiteID:   site.ID,
+		}); err == nil && len(posts) != 0 { // 기존에 등록된 이벤트일 경우
+			log.Printf("Post %s posted at %v has already been registered\n", p.Title, p.PostedAt)
 			continue
 		}
 
@@ -76,14 +73,11 @@ func HandlerCrawl(s *State, cmd Command) error {
 			count += 1
 
 			if i < len(p.EndsAt) {
-				s.PtrDB.CreateEvent(context.Background(), database.CreateEventParams{
-					Name:    p.Title,
-					Tag:     int32(p.Kind),
-					TagText: p.KindTxt,
-					PostedAt: sql.NullTime{
-						Time:  p.PostedAt,
-						Valid: true,
-					},
+				s.PtrDB.CreatePost(context.Background(), database.CreatePostParams{
+					Name:     p.Title,
+					Tag:      int32(p.Kind),
+					TagText:  p.KindTxt,
+					PostedAt: p.PostedAt,
 					StartsAt: sql.NullTime{
 						Time:  p.StartsAt[i],
 						Valid: true,
@@ -92,19 +86,16 @@ func HandlerCrawl(s *State, cmd Command) error {
 						Time:  p.EndsAt[i],
 						Valid: true,
 					},
-					Body:     p.Body,
-					EventUrl: p.Url,
-					SiteID:   site.ID,
+					Body:    p.Body,
+					PostUrl: p.Url,
+					SiteID:  site.ID,
 				})
 			} else { // @@@ 종료시점 없는 경우 처리해야함
-				s.PtrDB.CreateEvent(context.Background(), database.CreateEventParams{
-					Name:    p.Title,
-					Tag:     int32(p.Kind),
-					TagText: p.KindTxt,
-					PostedAt: sql.NullTime{
-						Time:  p.PostedAt,
-						Valid: true,
-					},
+				s.PtrDB.CreatePost(context.Background(), database.CreatePostParams{
+					Name:     p.Title,
+					Tag:      int32(p.Kind),
+					TagText:  p.KindTxt,
+					PostedAt: p.PostedAt,
 					StartsAt: sql.NullTime{
 						Time:  p.StartsAt[i],
 						Valid: true,
@@ -112,9 +103,9 @@ func HandlerCrawl(s *State, cmd Command) error {
 					EndsAt: sql.NullTime{
 						Valid: false,
 					},
-					Body:     p.Body,
-					EventUrl: p.Url,
-					SiteID:   site.ID,
+					Body:    p.Body,
+					PostUrl: p.Url,
+					SiteID:  site.ID,
 				})
 			}
 
@@ -122,7 +113,7 @@ func HandlerCrawl(s *State, cmd Command) error {
 
 	}
 
-	log.Printf("Total %d events have been registered", count)
+	log.Printf("Total %d posts have been registered", count)
 
 	s.PtrDB.MarkSiteFetched(context.Background(), site.ID)
 

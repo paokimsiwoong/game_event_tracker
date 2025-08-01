@@ -33,17 +33,17 @@ func TestNewCalendar(t *testing.T) {
 
 	// sqlc가 생성한 database 패키지 사용
 	dbQueries := database.New(db)
-	events, err := dbQueries.GetEventsOnGoingAndSites(context.Background())
+	posts, err := dbQueries.GetPostsOnGoingAndSites(context.Background())
 	require.NoError(t, err)
 	e := &Event{
-		Name:     events[1].Name,
-		Tag:      events[1].Tag,
-		TagText:  events[1].TagText,
-		StartsAt: events[1].StartsAt,
-		EndsAt:   events[1].EndsAt,
-		EventUrl: events[1].EventUrl,
-		SiteName: events[1].SiteName,
-		SiteUrl:  events[1].SiteUrl,
+		Name:     posts[1].Name,
+		Tag:      posts[1].Tag,
+		TagText:  posts[1].TagText,
+		StartsAt: posts[1].StartsAt,
+		EndsAt:   posts[1].EndsAt,
+		EventUrl: posts[1].PostUrl,
+		SiteName: posts[1].SiteName,
+		SiteUrl:  posts[1].SiteUrl,
 	}
 	calendarID := "primary"
 	err = AddEvent(srv, calendarID, e)

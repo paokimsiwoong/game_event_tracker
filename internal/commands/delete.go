@@ -52,66 +52,66 @@ func HandlerDelete(s *State, cmd Command) error {
 		fmt.Printf("site %s(url: %s) has been deleted\n", site.Name, site.Url)
 
 		return nil
-	} else if cmd.Args[0] == "event" {
+	} else if cmd.Args[0] == "post" {
 		if len(cmd.Args) == 2 {
-			// DeleteOldEvents
+			// DeleteOldPosts
 			if cmd.Args[1] == "old" {
-				err := s.PtrDB.DeleteOldEvents(context.Background())
+				err := s.PtrDB.DeleteOldPosts(context.Background())
 				if err != nil {
-					return fmt.Errorf("error deleting old events: %w", err)
+					return fmt.Errorf("error deleting old posts: %w", err)
 				}
-				fmt.Println("Old events have been deleted")
+				fmt.Println("Old posts have been deleted")
 
 				return nil
 			} else if cmd.Args[1] == "all" {
-				// ResetEvents
-				err := s.PtrDB.ResetEvents(context.Background())
+				// ResetPosts
+				err := s.PtrDB.ResetPosts(context.Background())
 				if err != nil {
-					return fmt.Errorf("error deleting all events: %w", err)
+					return fmt.Errorf("error deleting all posts: %w", err)
 				}
-				fmt.Println("All events have been deleted")
+				fmt.Println("All posts have been deleted")
 
 				return nil
 			}
-			return errors.New("the delete event command expects one or two additional arguments in the form of <one of old, all, name, n, url, u> <(if name, n) name_value, (if url, u) url_value>")
+			return errors.New("the delete post command expects one or two additional arguments in the form of <one of old, all, name, n, url, u> <(if name, n) name_value, (if url, u) url_value>")
 
 		} else if len(cmd.Args) == 3 {
 			// cmd.Args[1] 확인
 			allowed := []string{"n", "name", "u", "url"}
 			if !slices.Contains(allowed, cmd.Args[1]) {
-				return errors.New("the delete event command expects one or two additional arguments in the form of <one of old, all, name, n, url, u> <(if name, n) name_value, (if url, u) url_value>")
+				return errors.New("the delete post command expects one or two additional arguments in the form of <one of old, all, name, n, url, u> <(if name, n) name_value, (if url, u) url_value>")
 			}
-			// DeleteEventsBySiteName
+			// DeletePostsBySiteName
 			if cmd.Args[1][0] == 'n' {
 				site, err := s.PtrDB.GetSiteByName(context.Background(), cmd.Args[2])
 				if err != nil {
-					return fmt.Errorf("error deleting event: site with the provided name not found: %w", err)
+					return fmt.Errorf("error deleting post: site with the provided name not found: %w", err)
 				}
 
-				if err := s.PtrDB.DeleteEventsBySiteName(context.Background(), cmd.Args[2]); err != nil {
-					return fmt.Errorf("error deleting event by site name: %w", err)
+				if err := s.PtrDB.DeletePostsBySiteName(context.Background(), cmd.Args[2]); err != nil {
+					return fmt.Errorf("error deleting post by site name: %w", err)
 				}
-				fmt.Printf("events by site %s(url: %s) have been deleted\n", site.Name, site.Url)
+				fmt.Printf("posts by site %s(url: %s) have been deleted\n", site.Name, site.Url)
 
 				return nil
 			}
-			// DeleteEventsBySiteUrl
+			// DeletePostsBySiteUrl
 			site, err := s.PtrDB.GetSiteByURL(context.Background(), cmd.Args[2])
 
 			if err != nil {
-				return fmt.Errorf("error deleting event: site with the provided url not found: %w", err)
+				return fmt.Errorf("error deleting post: site with the provided url not found: %w", err)
 			}
 
-			if err := s.PtrDB.DeleteEventsBySiteUrl(context.Background(), cmd.Args[2]); err != nil {
-				return fmt.Errorf("error deleting event by site url: %w", err)
+			if err := s.PtrDB.DeletePostsBySiteUrl(context.Background(), cmd.Args[2]); err != nil {
+				return fmt.Errorf("error deleting post by site url: %w", err)
 			}
 
-			fmt.Printf("events by site %s(url: %s) has been deleted\n", site.Name, site.Url)
+			fmt.Printf("posts by site %s(url: %s) has been deleted\n", site.Name, site.Url)
 
 			return nil
 		}
 
-		return errors.New("the delete event command expects one or two additional arguments in the form of <one of old, all, name, n, url, u> <(if name, n) name_value, (if url, u) url_value>")
+		return errors.New("the delete post command expects one or two additional arguments in the form of <one of old, all, name, n, url, u> <(if name, n) name_value, (if url, u) url_value>")
 	} else {
 		return errors.New("the delete handler expects its first argument to be either site or events")
 	}

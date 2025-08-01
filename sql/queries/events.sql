@@ -1,5 +1,5 @@
 -- name: CreateEvent :one
-INSERT INTO events (id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, event_url, site_id)
+INSERT INTO events (id, created_at, updated_at, tag, tag_text, starts_at, ends_at, names, posted_ats, post_urls, post_ids, site_id)
 VALUES (
     gen_random_uuid(),
     NOW(),
@@ -8,51 +8,36 @@ VALUES (
     $2,
     $3,
     $4,
-    $5,
-    $6,
-    $7,
-    $8,
+    ARRAY[$5],
+    ARRAY[$6],
+    ARRAY[$7],
+    ARRAY[$8],
     $9
 )
+ON CONFLICT (tag, starts_at, ends_at)
+DO UPDATE SET names = array_append(names, $5), 
+posted_ats = array_append(posted_ats, $6),
+post_urls = array_append(post_urls, $7),
+post_ids = array_append(post_ids, $8),
+updated_at = NOW()
 RETURNING *;
-
--- name: CreateEventWithNull :one
-INSERT INTO events (id, created_at, updated_at, name, tag, tag_text, body, event_url, site_id)
-VALUES (
-    gen_random_uuid(),
-    NOW(),
-    NOW(),
-    $1,
-    $2,
-    $3,
-    $4,
-    $5,
-    $6
-)
-RETURNING *;
-
--- name: GetEvents :many
-SELECT * FROM events
-ORDER BY created_at;
-
--- name: GetEventsAndSites :many
-SELECT events.*, sites.name AS site_name, sites.url AS site_url FROM events
-INNER JOIN sites
-ON events.site_id = sites.id
-ORDER BY events.posted_at DESC, events.starts_at DESC;
 
 -- name: GetEventByID :one
 SELECT * FROM events
 WHERE id = $1;
 
--- name: GetEventsByName :many
+-- name: GetEvents :many
 SELECT * FROM events
-WHERE name = $1
 ORDER BY created_at;
 
--- name: GetEventsByNameAndPostedAtAndSiteID :many
+-- name: GetEventsByTag :many
 SELECT * FROM events
-WHERE name = $1 AND posted_at = $2 AND site_id = $3
+WHERE tag = $1
+ORDER BY created_at;
+
+-- name: GetEventsByTagText :many
+SELECT * FROM events
+WHERE tag_text = $1
 ORDER BY created_at;
 
 -- name: GetEventsBySiteID :many
@@ -62,20 +47,8 @@ ORDER BY created_at;
 
 -- name: GetEventsOnGoing :many
 SELECT * FROM events
-WHERE starts_at <= NOW() and ends_at >= NOW()
+WHERE starts_at <= NOW() AND (ends_at IS NULL OR ends_at >= NOW())
 ORDER BY created_at;
-
--- name: GetEventsOnGoingAndSites :many
-SELECT events.*, sites.name AS site_name, sites.url AS site_url FROM events
-INNER JOIN sites
-ON events.site_id = sites.id
-WHERE events.starts_at <= NOW() AND (events.ends_at IS NULL OR events.ends_at >= NOW())
-ORDER BY events.posted_at DESC, events.starts_at DESC;
-
--- name: SetEventDates :exec
-UPDATE events
-SET updated_at = NOW(), posted_at = $1, starts_at = $2, ends_at = $3
-WHERE id = $4;
 
 -- name: DeleteEventByID :exec
 DELETE FROM events
@@ -85,7 +58,7 @@ WHERE id = $1;
 DELETE FROM events
 WHERE site_id = $1;
 
--- name: DeleteEventsBySiteName :exec
+-- name: DeleteEventBySiteName :exec
 DELETE FROM events
 USING sites
 WHERE events.site_id = sites.id AND sites.name = $1;
