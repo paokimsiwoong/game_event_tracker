@@ -26,4 +26,4 @@ game-event-calendar/
 └── README.md
 ```
 
-TODO: events에는 동일 이벤트가 중복되어 들어가지 않도록 변경하기(posts테이블과 events 테이블로 분리? / 시작, 종료 시점 pair를 UNIQUE(,)로 하면 동일 일정 다른 이벤트가 있음 => tag, 시작, 종료 시점 trio를 unique로?)
+TODO: https://sv-news.pokemon.co.jp/ko/page/373.html, https://sv-news.pokemon.co.jp/ko/page/370.html 과 같이 한 게시글에 테라레이드 기간과 이후의 이상한 소포 선물 기간이 같이 있는 경우 이상한 소포 선물 기간의 tag와 tag text가 1, 테라 레이드배틀이 되는 문제 해결?

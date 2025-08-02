@@ -15,8 +15,8 @@ CREATE TABLE events (
     site_id UUID NOT NULL,
     CONSTRAINT fk_sites
     FOREIGN KEY (site_id)
-    REFERENCES sites(id)
-    ON DELETE CASCADE,
+    REFERENCES sites(id),
+    -- ON DELETE CASCADE, -- 캘린더에 등록된 많은 일정을 지우기 전에 site가 지워져서 events 테이블에 연결된 데이터들이 지워지면 큰 문제
     UNIQUE(tag, starts_at, ends_at) 
 );
 

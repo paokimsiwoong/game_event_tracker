@@ -1,5 +1,5 @@
 -- name: CreatePost :one
-INSERT INTO posts (id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, post_url, site_id)
+INSERT INTO posts (id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, post_url, site_id, registered)
 VALUES (
     gen_random_uuid(),
     NOW(),
@@ -12,12 +12,13 @@ VALUES (
     $6,
     $7,
     $8,
-    $9
+    $9,
+    false
 )
 RETURNING *;
 
 -- name: CreatePostWithNull :one
-INSERT INTO posts (id, created_at, updated_at, name, tag, tag_text, posted_at, body, post_url, site_id)
+INSERT INTO posts (id, created_at, updated_at, name, tag, tag_text, posted_at, body, post_url, site_id, registered)
 VALUES (
     gen_random_uuid(),
     NOW(),
@@ -28,7 +29,8 @@ VALUES (
     $4,
     $5,
     $6,
-    $7
+    $7,
+    false
 )
 RETURNING *;
 
@@ -84,6 +86,11 @@ ORDER BY posts.posted_at DESC, posts.starts_at DESC;
 UPDATE posts
 SET updated_at = NOW(), posted_at = $1, starts_at = $2, ends_at = $3
 WHERE id = $4;
+
+-- name: SetPostRegisteredTrue :exec
+UPDATE posts
+SET updated_at = NOW(), registered = true
+WHERE id = $1;
 
 -- name: DeletePostByID :exec
 DELETE FROM posts

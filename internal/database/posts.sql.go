@@ -14,7 +14,7 @@ import (
 )
 
 const createPost = `-- name: CreatePost :one
-INSERT INTO posts (id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, post_url, site_id)
+INSERT INTO posts (id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, post_url, site_id, registered)
 VALUES (
     gen_random_uuid(),
     NOW(),
@@ -27,9 +27,10 @@ VALUES (
     $6,
     $7,
     $8,
-    $9
+    $9,
+    false
 )
-RETURNING id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, post_url, site_id
+RETURNING id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, post_url, site_id, registered
 `
 
 type CreatePostParams struct {
@@ -70,12 +71,13 @@ func (q *Queries) CreatePost(ctx context.Context, arg CreatePostParams) (Post, e
 		&i.Body,
 		&i.PostUrl,
 		&i.SiteID,
+		&i.Registered,
 	)
 	return i, err
 }
 
 const createPostWithNull = `-- name: CreatePostWithNull :one
-INSERT INTO posts (id, created_at, updated_at, name, tag, tag_text, posted_at, body, post_url, site_id)
+INSERT INTO posts (id, created_at, updated_at, name, tag, tag_text, posted_at, body, post_url, site_id, registered)
 VALUES (
     gen_random_uuid(),
     NOW(),
@@ -86,9 +88,10 @@ VALUES (
     $4,
     $5,
     $6,
-    $7
+    $7,
+    false
 )
-RETURNING id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, post_url, site_id
+RETURNING id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, post_url, site_id, registered
 `
 
 type CreatePostWithNullParams struct {
@@ -125,6 +128,7 @@ func (q *Queries) CreatePostWithNull(ctx context.Context, arg CreatePostWithNull
 		&i.Body,
 		&i.PostUrl,
 		&i.SiteID,
+		&i.Registered,
 	)
 	return i, err
 }
@@ -184,7 +188,7 @@ func (q *Queries) DeletePostsBySiteUrl(ctx context.Context, url string) error {
 }
 
 const getPostByID = `-- name: GetPostByID :one
-SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, post_url, site_id FROM posts
+SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, post_url, site_id, registered FROM posts
 WHERE id = $1
 `
 
@@ -204,12 +208,13 @@ func (q *Queries) GetPostByID(ctx context.Context, id uuid.UUID) (Post, error) {
 		&i.Body,
 		&i.PostUrl,
 		&i.SiteID,
+		&i.Registered,
 	)
 	return i, err
 }
 
 const getPosts = `-- name: GetPosts :many
-SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, post_url, site_id FROM posts
+SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, post_url, site_id, registered FROM posts
 ORDER BY created_at
 `
 
@@ -235,6 +240,7 @@ func (q *Queries) GetPosts(ctx context.Context) ([]Post, error) {
 			&i.Body,
 			&i.PostUrl,
 			&i.SiteID,
+			&i.Registered,
 		); err != nil {
 			return nil, err
 		}
@@ -250,27 +256,28 @@ func (q *Queries) GetPosts(ctx context.Context) ([]Post, error) {
 }
 
 const getPostsAndSites = `-- name: GetPostsAndSites :many
-SELECT posts.id, posts.created_at, posts.updated_at, posts.name, posts.tag, posts.tag_text, posts.posted_at, posts.starts_at, posts.ends_at, posts.body, posts.post_url, posts.site_id, sites.name AS site_name, sites.url AS site_url FROM posts
+SELECT posts.id, posts.created_at, posts.updated_at, posts.name, posts.tag, posts.tag_text, posts.posted_at, posts.starts_at, posts.ends_at, posts.body, posts.post_url, posts.site_id, posts.registered, sites.name AS site_name, sites.url AS site_url FROM posts
 INNER JOIN sites
 ON posts.site_id = sites.id
 ORDER BY posts.posted_at DESC, posts.starts_at DESC
 `
 
 type GetPostsAndSitesRow struct {
-	ID        uuid.UUID
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Name      string
-	Tag       int32
-	TagText   string
-	PostedAt  time.Time
-	StartsAt  sql.NullTime
-	EndsAt    sql.NullTime
-	Body      string
-	PostUrl   string
-	SiteID    uuid.UUID
-	SiteName  string
-	SiteUrl   string
+	ID         uuid.UUID
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	Name       string
+	Tag        int32
+	TagText    string
+	PostedAt   time.Time
+	StartsAt   sql.NullTime
+	EndsAt     sql.NullTime
+	Body       string
+	PostUrl    string
+	SiteID     uuid.UUID
+	Registered bool
+	SiteName   string
+	SiteUrl    string
 }
 
 func (q *Queries) GetPostsAndSites(ctx context.Context) ([]GetPostsAndSitesRow, error) {
@@ -295,6 +302,7 @@ func (q *Queries) GetPostsAndSites(ctx context.Context) ([]GetPostsAndSitesRow, 
 			&i.Body,
 			&i.PostUrl,
 			&i.SiteID,
+			&i.Registered,
 			&i.SiteName,
 			&i.SiteUrl,
 		); err != nil {
@@ -312,7 +320,7 @@ func (q *Queries) GetPostsAndSites(ctx context.Context) ([]GetPostsAndSitesRow, 
 }
 
 const getPostsByName = `-- name: GetPostsByName :many
-SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, post_url, site_id FROM posts
+SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, post_url, site_id, registered FROM posts
 WHERE name = $1
 ORDER BY created_at
 `
@@ -339,6 +347,7 @@ func (q *Queries) GetPostsByName(ctx context.Context, name string) ([]Post, erro
 			&i.Body,
 			&i.PostUrl,
 			&i.SiteID,
+			&i.Registered,
 		); err != nil {
 			return nil, err
 		}
@@ -354,7 +363,7 @@ func (q *Queries) GetPostsByName(ctx context.Context, name string) ([]Post, erro
 }
 
 const getPostsByNameAndPostedAtAndSiteID = `-- name: GetPostsByNameAndPostedAtAndSiteID :many
-SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, post_url, site_id FROM posts
+SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, post_url, site_id, registered FROM posts
 WHERE name = $1 AND posted_at = $2 AND site_id = $3
 ORDER BY created_at
 `
@@ -387,6 +396,7 @@ func (q *Queries) GetPostsByNameAndPostedAtAndSiteID(ctx context.Context, arg Ge
 			&i.Body,
 			&i.PostUrl,
 			&i.SiteID,
+			&i.Registered,
 		); err != nil {
 			return nil, err
 		}
@@ -402,7 +412,7 @@ func (q *Queries) GetPostsByNameAndPostedAtAndSiteID(ctx context.Context, arg Ge
 }
 
 const getPostsBySiteID = `-- name: GetPostsBySiteID :many
-SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, post_url, site_id FROM posts
+SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, post_url, site_id, registered FROM posts
 WHERE site_id = $1
 ORDER BY created_at
 `
@@ -429,6 +439,7 @@ func (q *Queries) GetPostsBySiteID(ctx context.Context, siteID uuid.UUID) ([]Pos
 			&i.Body,
 			&i.PostUrl,
 			&i.SiteID,
+			&i.Registered,
 		); err != nil {
 			return nil, err
 		}
@@ -444,7 +455,7 @@ func (q *Queries) GetPostsBySiteID(ctx context.Context, siteID uuid.UUID) ([]Pos
 }
 
 const getPostsOnGoing = `-- name: GetPostsOnGoing :many
-SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, post_url, site_id FROM posts
+SELECT id, created_at, updated_at, name, tag, tag_text, posted_at, starts_at, ends_at, body, post_url, site_id, registered FROM posts
 WHERE starts_at <= NOW() AND (ends_at IS NULL OR ends_at >= NOW())
 ORDER BY created_at
 `
@@ -471,6 +482,7 @@ func (q *Queries) GetPostsOnGoing(ctx context.Context) ([]Post, error) {
 			&i.Body,
 			&i.PostUrl,
 			&i.SiteID,
+			&i.Registered,
 		); err != nil {
 			return nil, err
 		}
@@ -486,7 +498,7 @@ func (q *Queries) GetPostsOnGoing(ctx context.Context) ([]Post, error) {
 }
 
 const getPostsOnGoingAndSites = `-- name: GetPostsOnGoingAndSites :many
-SELECT posts.id, posts.created_at, posts.updated_at, posts.name, posts.tag, posts.tag_text, posts.posted_at, posts.starts_at, posts.ends_at, posts.body, posts.post_url, posts.site_id, sites.name AS site_name, sites.url AS site_url FROM posts
+SELECT posts.id, posts.created_at, posts.updated_at, posts.name, posts.tag, posts.tag_text, posts.posted_at, posts.starts_at, posts.ends_at, posts.body, posts.post_url, posts.site_id, posts.registered, sites.name AS site_name, sites.url AS site_url FROM posts
 INNER JOIN sites
 ON posts.site_id = sites.id
 WHERE posts.starts_at <= NOW() AND (posts.ends_at IS NULL OR posts.ends_at >= NOW())
@@ -494,20 +506,21 @@ ORDER BY posts.posted_at DESC, posts.starts_at DESC
 `
 
 type GetPostsOnGoingAndSitesRow struct {
-	ID        uuid.UUID
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Name      string
-	Tag       int32
-	TagText   string
-	PostedAt  time.Time
-	StartsAt  sql.NullTime
-	EndsAt    sql.NullTime
-	Body      string
-	PostUrl   string
-	SiteID    uuid.UUID
-	SiteName  string
-	SiteUrl   string
+	ID         uuid.UUID
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	Name       string
+	Tag        int32
+	TagText    string
+	PostedAt   time.Time
+	StartsAt   sql.NullTime
+	EndsAt     sql.NullTime
+	Body       string
+	PostUrl    string
+	SiteID     uuid.UUID
+	Registered bool
+	SiteName   string
+	SiteUrl    string
 }
 
 func (q *Queries) GetPostsOnGoingAndSites(ctx context.Context) ([]GetPostsOnGoingAndSitesRow, error) {
@@ -532,6 +545,7 @@ func (q *Queries) GetPostsOnGoingAndSites(ctx context.Context) ([]GetPostsOnGoin
 			&i.Body,
 			&i.PostUrl,
 			&i.SiteID,
+			&i.Registered,
 			&i.SiteName,
 			&i.SiteUrl,
 		); err != nil {
@@ -549,7 +563,7 @@ func (q *Queries) GetPostsOnGoingAndSites(ctx context.Context) ([]GetPostsOnGoin
 }
 
 const getPostsWithinGivenPeriod = `-- name: GetPostsWithinGivenPeriod :many
-SELECT posts.id, posts.created_at, posts.updated_at, posts.name, posts.tag, posts.tag_text, posts.posted_at, posts.starts_at, posts.ends_at, posts.body, posts.post_url, posts.site_id, sites.name AS site_name, sites.url AS site_url FROM posts
+SELECT posts.id, posts.created_at, posts.updated_at, posts.name, posts.tag, posts.tag_text, posts.posted_at, posts.starts_at, posts.ends_at, posts.body, posts.post_url, posts.site_id, posts.registered, sites.name AS site_name, sites.url AS site_url FROM posts
 INNER JOIN sites
 ON posts.site_id = sites.id
 WHERE posts.ends_at IS NULL OR posts.ends_at >= $1
@@ -557,20 +571,21 @@ ORDER BY posts.posted_at DESC, posts.starts_at DESC
 `
 
 type GetPostsWithinGivenPeriodRow struct {
-	ID        uuid.UUID
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Name      string
-	Tag       int32
-	TagText   string
-	PostedAt  time.Time
-	StartsAt  sql.NullTime
-	EndsAt    sql.NullTime
-	Body      string
-	PostUrl   string
-	SiteID    uuid.UUID
-	SiteName  string
-	SiteUrl   string
+	ID         uuid.UUID
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	Name       string
+	Tag        int32
+	TagText    string
+	PostedAt   time.Time
+	StartsAt   sql.NullTime
+	EndsAt     sql.NullTime
+	Body       string
+	PostUrl    string
+	SiteID     uuid.UUID
+	Registered bool
+	SiteName   string
+	SiteUrl    string
 }
 
 func (q *Queries) GetPostsWithinGivenPeriod(ctx context.Context, endsAt sql.NullTime) ([]GetPostsWithinGivenPeriodRow, error) {
@@ -595,6 +610,7 @@ func (q *Queries) GetPostsWithinGivenPeriod(ctx context.Context, endsAt sql.Null
 			&i.Body,
 			&i.PostUrl,
 			&i.SiteID,
+			&i.Registered,
 			&i.SiteName,
 			&i.SiteUrl,
 		); err != nil {
@@ -640,5 +656,16 @@ func (q *Queries) SetPostDates(ctx context.Context, arg SetPostDatesParams) erro
 		arg.EndsAt,
 		arg.ID,
 	)
+	return err
+}
+
+const setPostRegisteredTrue = `-- name: SetPostRegisteredTrue :exec
+UPDATE posts
+SET updated_at = NOW(), registered = true
+WHERE id = $1
+`
+
+func (q *Queries) SetPostRegisteredTrue(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, setPostRegisteredTrue, id)
 	return err
 }

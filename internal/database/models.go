@@ -28,18 +28,19 @@ type Event struct {
 }
 
 type Post struct {
-	ID        uuid.UUID
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Name      string
-	Tag       int32
-	TagText   string
-	PostedAt  time.Time
-	StartsAt  sql.NullTime
-	EndsAt    sql.NullTime
-	Body      string
-	PostUrl   string
-	SiteID    uuid.UUID
+	ID         uuid.UUID
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	Name       string
+	Tag        int32
+	TagText    string
+	PostedAt   time.Time
+	StartsAt   sql.NullTime
+	EndsAt     sql.NullTime
+	Body       string
+	PostUrl    string
+	SiteID     uuid.UUID
+	Registered bool
 }
 
 type Site struct {

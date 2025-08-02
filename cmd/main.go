@@ -44,6 +44,7 @@ func main() {
 	cmds.Register("delete", commands.HandlerDelete)
 	cmds.Register("crawl", commands.HandlerCrawl)
 	cmds.Register("posts", commands.HandlerPosts)
+	cmds.Register("calendar", commands.HandlerCalendar)
 
 	// 유저 명령어 입력 확인
 	if len(os.Args) < 2 {
