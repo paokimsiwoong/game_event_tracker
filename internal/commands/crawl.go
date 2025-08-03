@@ -73,7 +73,7 @@ func HandlerCrawl(s *State, cmd Command) error {
 			count += 1
 
 			if i < len(p.EndsAt) {
-				s.PtrDB.CreatePost(context.Background(), database.CreatePostParams{
+				_, err = s.PtrDB.CreatePost(context.Background(), database.CreatePostParams{
 					Name:     p.Title,
 					Tag:      int32(p.Kind),
 					TagText:  p.KindTxt,
@@ -90,8 +90,11 @@ func HandlerCrawl(s *State, cmd Command) error {
 					PostUrl: p.Url,
 					SiteID:  site.ID,
 				})
+				if err != nil {
+					return fmt.Errorf("error creating a post: %w", err)
+				}
 			} else { // @@@ 종료시점 없는 경우 처리해야함
-				s.PtrDB.CreatePost(context.Background(), database.CreatePostParams{
+				_, err = s.PtrDB.CreatePost(context.Background(), database.CreatePostParams{
 					Name:     p.Title,
 					Tag:      int32(p.Kind),
 					TagText:  p.KindTxt,
@@ -107,6 +110,9 @@ func HandlerCrawl(s *State, cmd Command) error {
 					PostUrl: p.Url,
 					SiteID:  site.ID,
 				})
+				if err != nil {
+					return fmt.Errorf("error creating a post: %w", err)
+				}
 			}
 
 		}

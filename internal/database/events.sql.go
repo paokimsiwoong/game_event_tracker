@@ -24,17 +24,17 @@ VALUES (
     $2,
     $3,
     $4,
-    ARRAY[$5],
-    ARRAY[$6],
-    ARRAY[$7],
-    ARRAY[$8],
+    ARRAY[$5::TEXT],
+    ARRAY[$6::TIMESTAMP WITH TIME ZONE],
+    ARRAY[$7::TEXT],
+    ARRAY[$8::UUID],
     $9
 )
 ON CONFLICT (tag, starts_at, ends_at)
-DO UPDATE SET names = array_append(names, $5), 
-posted_ats = array_append(posted_ats, $6),
-post_urls = array_append(post_urls, $7),
-post_ids = array_append(post_ids, $8),
+DO UPDATE SET names = array_append(events.names, $5::TEXT), 
+posted_ats = array_append(events.posted_ats, $6::TIMESTAMP WITH TIME ZONE),
+post_urls = array_append(events.post_urls, $7::TEXT),
+post_ids = array_append(events.post_ids, $8::UUID),
 updated_at = NOW()
 RETURNING id, created_at, updated_at, tag, tag_text, starts_at, ends_at, event_cal_id, names, posted_ats, post_urls, post_ids, site_id
 `
@@ -44,10 +44,10 @@ type CreateEventParams struct {
 	TagText  string
 	StartsAt sql.NullTime
 	EndsAt   sql.NullTime
-	Column5  interface{}
-	Column6  interface{}
-	Column7  interface{}
-	Column8  interface{}
+	Column5  string
+	Column6  time.Time
+	Column7  string
+	Column8  uuid.UUID
 	SiteID   uuid.UUID
 }
 

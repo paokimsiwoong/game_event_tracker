@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"testing"
 
-	_ "github.com/lib/pq"
-
+	// _ "github.com/lib/pq"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/paokimsiwoong/game_event_tracker/internal/database"
 	"github.com/stretchr/testify/require"
 )
@@ -26,7 +26,7 @@ func TestNewCalendar(t *testing.T) {
 
 	// sql.Open의 첫번째 인자로 사용하는 sql 드라이버를 지정(_ "github.com/lib/pq"이 postgres)
 	// 두번째 인자로는 connection string(postgres://username:password@localhost:5432/dbname?sslmode=disable 형태)로 database 연결
-	db, err := sql.Open("postgres", "postgres://postgres:20151223@localhost:5432/getker?sslmode=disable")
+	db, err := sql.Open("pgx", "postgres://postgres:20151223@localhost:5432/getker?sslmode=disable")
 	require.NoError(t, err)
 	// db는 *sql.DB 타입
 	defer db.Close()

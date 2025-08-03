@@ -15,7 +15,7 @@ func HandlerPosts(s *State, cmd Command) error {
 	if len(cmd.Args) == 0 {
 		posts, err := s.PtrDB.GetPostsAndSites(context.Background())
 		if err != nil {
-			return fmt.Errorf("error getting posts table : %w", err)
+			return fmt.Errorf("error getting posts table: %w", err)
 		}
 
 		fmt.Println("--------------------------------------------------")
@@ -66,7 +66,7 @@ func HandlerPosts(s *State, cmd Command) error {
 	} else if len(cmd.Args) == 1 && cmd.Args[0] == "ongoing" {
 		posts, err := s.PtrDB.GetPostsOnGoingAndSites(context.Background())
 		if err != nil {
-			return fmt.Errorf("error getting posts table : %w", err)
+			return fmt.Errorf("error getting posts table: %w", err)
 		}
 
 		fmt.Println("--------------------------------------------------")
@@ -125,12 +125,12 @@ func HandlerPosts(s *State, cmd Command) error {
 			Valid: true,
 		})
 		if err != nil {
-			return fmt.Errorf("error getting posts table : %w", err)
+			return fmt.Errorf("error getting posts table: %w", err)
 		}
 
 		fmt.Println("--------------------------------------------------")
 		fmt.Println("--------------------------------------------------")
-		fmt.Printf("%d posts in the table are with an end time later than %d days ago\n", len(posts), p)
+		fmt.Printf("There are %d posts in the table with an end time within the last %d days\n", len(posts), p)
 		fmt.Println("--------------------------------------------------")
 		fmt.Println("--------------------------------------------------")
 
@@ -139,34 +139,29 @@ func HandlerPosts(s *State, cmd Command) error {
 		}
 
 		for _, post := range posts {
+			fmt.Printf(
+				"Name: %s\nCreated at: %v\nPosted at: %v\nTag: %v\nTag text: %v\nStarts at: %v\n",
+				post.Name,
+				post.CreatedAt,
+				post.PostedAt,
+				post.Tag,
+				post.TagText,
+				post.StartsAt.Time,
+			)
 			if post.EndsAt.Valid {
 				fmt.Printf(
-					"Name: %s\nCreated at: %v\nPosted at: %v\nTag: %v\nTag text: %v\nStarts at: %v\nEnds at: %v\nPost url: %v\nSite name: %v\nSite url: %v\n",
-					post.Name,
-					post.CreatedAt,
-					post.PostedAt,
-					post.Tag,
-					post.TagText,
-					post.StartsAt.Time,
+					"Ends at: %v\n",
 					post.EndsAt.Time,
-					post.PostUrl,
-					post.SiteName,
-					post.SiteUrl,
 				)
 			} else {
-				fmt.Printf(
-					"Name: %s\nCreated at: %v\nPosted at: %v\nTag: %v\nTag text: %v\nStarts at: %v\nEnds at: permanent\nPost url: %v\nSite name: %v\nSite url: %v\n",
-					post.Name,
-					post.CreatedAt,
-					post.PostedAt,
-					post.Tag,
-					post.TagText,
-					post.StartsAt.Time,
-					post.PostUrl,
-					post.SiteName,
-					post.SiteUrl,
-				)
+				fmt.Println("Ends at: permanent")
 			}
+			fmt.Printf(
+				"Post url: %v\nSite name: %v\nSite url: %v\n",
+				post.PostUrl,
+				post.SiteName,
+				post.SiteUrl,
+			)
 			fmt.Println("--------------------------------------------------")
 		}
 		fmt.Println("--------------------------------------------------")

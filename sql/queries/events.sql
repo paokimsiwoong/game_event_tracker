@@ -8,17 +8,17 @@ VALUES (
     $2,
     $3,
     $4,
-    ARRAY[$5],
-    ARRAY[$6],
-    ARRAY[$7],
-    ARRAY[$8],
+    ARRAY[$5::TEXT],
+    ARRAY[$6::TIMESTAMP WITH TIME ZONE],
+    ARRAY[$7::TEXT],
+    ARRAY[$8::UUID],
     $9
 )
 ON CONFLICT (tag, starts_at, ends_at)
-DO UPDATE SET names = array_append(names, $5), 
-posted_ats = array_append(posted_ats, $6),
-post_urls = array_append(post_urls, $7),
-post_ids = array_append(post_ids, $8),
+DO UPDATE SET names = array_append(events.names, $5::TEXT), 
+posted_ats = array_append(events.posted_ats, $6::TIMESTAMP WITH TIME ZONE),
+post_urls = array_append(events.post_urls, $7::TEXT),
+post_ids = array_append(events.post_ids, $8::UUID),
 updated_at = NOW()
 RETURNING *;
 
