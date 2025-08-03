@@ -2,13 +2,13 @@ package commands
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"log"
 	"slices"
 	"strconv"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/paokimsiwoong/game_event_tracker/internal/crawler"
 	"github.com/paokimsiwoong/game_event_tracker/internal/database"
 	"github.com/paokimsiwoong/game_event_tracker/internal/parser"
@@ -60,9 +60,12 @@ func HandlerCrawl(s *State, cmd Command) error {
 
 	for _, p := range parsed {
 		if posts, err := s.PtrDB.GetPostsByNameAndPostedAtAndSiteID(context.Background(), database.GetPostsByNameAndPostedAtAndSiteIDParams{
-			Name:     p.Title,
-			PostedAt: p.PostedAt,
-			SiteID:   site.ID,
+			Name: p.Title,
+			PostedAt: pgtype.Timestamptz{
+				Time:  p.PostedAt,
+				Valid: true,
+			},
+			SiteID: site.ID,
 		}); err == nil && len(posts) != 0 { // 기존에 등록된 이벤트일 경우
 			log.Printf("Post %s posted at %v has already been registered\n", p.Title, p.PostedAt)
 			continue
@@ -74,15 +77,18 @@ func HandlerCrawl(s *State, cmd Command) error {
 
 			if i < len(p.EndsAt) {
 				_, err = s.PtrDB.CreatePost(context.Background(), database.CreatePostParams{
-					Name:     p.Title,
-					Tag:      int32(p.Kind),
-					TagText:  p.KindTxt,
-					PostedAt: p.PostedAt,
-					StartsAt: sql.NullTime{
+					Name:    p.Title,
+					Tag:     int32(p.Kind),
+					TagText: p.KindTxt,
+					PostedAt: pgtype.Timestamptz{
+						Time:  p.PostedAt,
+						Valid: true,
+					},
+					StartsAt: pgtype.Timestamptz{
 						Time:  p.StartsAt[i],
 						Valid: true,
 					},
-					EndsAt: sql.NullTime{
+					EndsAt: pgtype.Timestamptz{
 						Time:  p.EndsAt[i],
 						Valid: true,
 					},
@@ -95,15 +101,18 @@ func HandlerCrawl(s *State, cmd Command) error {
 				}
 			} else { // @@@ 종료시점 없는 경우 처리해야함
 				_, err = s.PtrDB.CreatePost(context.Background(), database.CreatePostParams{
-					Name:     p.Title,
-					Tag:      int32(p.Kind),
-					TagText:  p.KindTxt,
-					PostedAt: p.PostedAt,
-					StartsAt: sql.NullTime{
+					Name:    p.Title,
+					Tag:     int32(p.Kind),
+					TagText: p.KindTxt,
+					PostedAt: pgtype.Timestamptz{
+						Time:  p.PostedAt,
+						Valid: true,
+					},
+					StartsAt: pgtype.Timestamptz{
 						Time:  p.StartsAt[i],
 						Valid: true,
 					},
-					EndsAt: sql.NullTime{
+					EndsAt: pgtype.Timestamptz{
 						Valid: false,
 					},
 					Body:    p.Body,

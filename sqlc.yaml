@@ -6,5 +6,7 @@ sql:
     gen:
       go:
         out: "internal/database"
+        sql_package: "pgx/v5" # Specifies pgx/v5 as the SQL package
+
 # sqlc 문서
 # https://docs.sqlc.dev/en/latest/tutorials/getting-started-postgresql.html

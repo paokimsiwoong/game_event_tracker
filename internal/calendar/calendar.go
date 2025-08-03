@@ -7,13 +7,13 @@ package calendar
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/calendar/v3"
@@ -202,8 +202,8 @@ type Event struct {
 	Name       string
 	Tag        int32
 	TagText    string
-	StartsAt   sql.NullTime
-	EndsAt     sql.NullTime
+	StartsAt   pgtype.Timestamptz
+	EndsAt     pgtype.Timestamptz
 	EventUrl   string
 	SiteName   string
 	SiteUrl    string

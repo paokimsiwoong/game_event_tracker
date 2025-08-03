@@ -1,12 +1,14 @@
 package main
 
 import (
-	"database/sql"
 	"log"
 	"os"
 
 	// _ "github.com/lib/pq" // _ "github.com/lib/pq" 는 postgres driver를 사용한다고 알리는 것. main.go 내부에서 직접 코드 작성할 때 쓰이지는 않음
-	_ "github.com/jackc/pgx/v5/stdlib"
+	// _ "github.com/jackc/pgx/v5/stdlib" native 모드를 사용하도록 변경
+	"context"
+
+	"github.com/jackc/pgx/v5"
 	"github.com/paokimsiwoong/game_event_tracker/internal/commands"
 	"github.com/paokimsiwoong/game_event_tracker/internal/config"
 	"github.com/paokimsiwoong/game_event_tracker/internal/database"
@@ -18,17 +20,26 @@ func main() {
 		log.Fatalf("Fatal: %v", err)
 	}
 
+	// @@@ pgx native API를 사용하도록 변경
 	// sql.Open의 첫번째 인자로 사용하는 sql 드라이버를 지정(_ "github.com/lib/pq"이 postgres)
 	// 두번째 인자로는 cfg.DBURL에 저장된 connection string(postgres://username:password@localhost:5432/dbname?sslmode=disable 형태)로 database 연결
-	db, errr := sql.Open("pgx", cfg.DBURL)
-	// db는 *sql.DB 타입
-	if errr != nil {
+	// db, errr := sql.Open("pgx", cfg.DBURL)
+	// // db는 *sql.DB 타입
+	// if errr != nil {
+	// 	log.Fatalf("error connecting to db : %v", err)
+	// }
+	// defer db.Close()
+
+	// @@@ pgx native API를 사용하도록 변경
+	ctx := context.Background()
+	conn, err := pgx.Connect(ctx, cfg.DBURL)
+	if err != nil {
 		log.Fatalf("error connecting to db : %v", err)
 	}
-	defer db.Close()
+	defer conn.Close(ctx)
 
 	// sqlc가 생성한 database 패키지 사용
-	dbQueries := database.New(db)
+	dbQueries := database.New(conn)
 
 	// state, commands 구조체들 초기화
 	stateInstance := commands.State{

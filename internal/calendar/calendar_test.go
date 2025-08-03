@@ -2,11 +2,12 @@ package calendar
 
 import (
 	"context"
-	"database/sql"
 	"testing"
 
 	// _ "github.com/lib/pq"
-	_ "github.com/jackc/pgx/v5/stdlib"
+	// _ "github.com/jackc/pgx/v5/stdlib"
+
+	"github.com/jackc/pgx/v5"
 	"github.com/paokimsiwoong/game_event_tracker/internal/database"
 	"github.com/stretchr/testify/require"
 )
@@ -26,13 +27,20 @@ func TestNewCalendar(t *testing.T) {
 
 	// sql.Open의 첫번째 인자로 사용하는 sql 드라이버를 지정(_ "github.com/lib/pq"이 postgres)
 	// 두번째 인자로는 connection string(postgres://username:password@localhost:5432/dbname?sslmode=disable 형태)로 database 연결
-	db, err := sql.Open("pgx", "postgres://postgres:20151223@localhost:5432/getker?sslmode=disable")
-	require.NoError(t, err)
-	// db는 *sql.DB 타입
-	defer db.Close()
+	// db, err := sql.Open("pgx", "postgres://postgres:20151223@localhost:5432/getker?sslmode=disable")
+	// require.NoError(t, err)
+	// // db는 *sql.DB 타입
+	// defer db.Close()
+
+	ctx := context.Background()
+	conn, _ := pgx.Connect(ctx, "postgres://postgres:20151223@localhost:5432/getker?sslmode=disable")
+	// if err != nil {
+	// 	log.Fatalf("error connecting to db : %v", err)
+	// }
+	defer conn.Close(ctx)
 
 	// sqlc가 생성한 database 패키지 사용
-	dbQueries := database.New(db)
+	dbQueries := database.New(conn)
 	posts, err := dbQueries.GetPostsOnGoingAndSites(context.Background())
 	require.NoError(t, err)
 	e := &Event{

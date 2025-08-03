@@ -2,11 +2,12 @@ package commands
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"strconv"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // DB에 저장된 post 목록 보여주는 핸들러
@@ -120,7 +121,7 @@ func HandlerPosts(s *State, cmd Command) error {
 			return fmt.Errorf("error calling strconv.Atoi: %w", err)
 		}
 		t := now.AddDate(0, 0, -p)
-		posts, err := s.PtrDB.GetPostsWithinGivenPeriod(context.Background(), sql.NullTime{
+		posts, err := s.PtrDB.GetPostsWithinGivenPeriod(context.Background(), pgtype.Timestamptz{
 			Time:  t,
 			Valid: true,
 		})
