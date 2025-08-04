@@ -8,7 +8,10 @@ import (
 )
 
 type Config struct {
-	DBURL       string
+	// db 연결 커넥션 스트링
+	DBURL string
+	// 일정을 저장할 구글 캘린더의 아이디
+	CalendarID  string
 	Platform    string
 	tokenSecret string
 }
@@ -22,11 +25,18 @@ func Read() (Config, error) {
 
 	// Getenv 함수로 환경변수를 불러올 수 있음
 	dbURL := os.Getenv("DB_URL")
+	calendarID := os.Getenv("CALENDAR_ID")
+	// 일정을 저장할 구글 캘린더의 아이디
+	if calendarID == "" {
+		// 설정하지 않으면 기본값은 primary
+		calendarID = "primary"
+	}
 	platform := os.Getenv("PLATFORM")
 	tokenSecret := os.Getenv("TOKEN_SECRET")
 
 	config := Config{
 		DBURL:       dbURL,
+		CalendarID:  calendarID,
 		Platform:    platform,
 		tokenSecret: tokenSecret,
 	}

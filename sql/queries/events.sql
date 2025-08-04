@@ -30,6 +30,12 @@ WHERE id = $1;
 SELECT * FROM events
 ORDER BY created_at;
 
+-- name: GetEventsAndSite :many
+SELECT events.*, sites.name AS site_name, sites.url AS site_url FROM events
+INNER JOIN sites
+ON events.site_id = sites.id
+ORDER BY events.starts_at DESC, events.ends_at DESC;
+
 -- name: GetEventsByTag :many
 SELECT * FROM events
 WHERE tag = $1

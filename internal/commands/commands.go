@@ -5,12 +5,14 @@ import (
 
 	"github.com/paokimsiwoong/game_event_tracker/internal/config"
 	"github.com/paokimsiwoong/game_event_tracker/internal/database"
+	"google.golang.org/api/calendar/v3"
 )
 
 // command들이 사용할 config.Config, database.Queries 포인터를 저장하는 구조체
 type State struct {
-	PtrCfg *config.Config
-	PtrDB  *database.Queries
+	PtrCfg    *config.Config
+	PtrDB     *database.Queries
+	PtrCalSrv *calendar.Service
 }
 
 // 명령어 한개의 정보를 저장하는 구조체

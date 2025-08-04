@@ -199,12 +199,12 @@ func NewCalendar() (*calendar.Service, error) {
 // AddEvent에 입력되는 이벤트 데이터를 담는 구조체
 // @@@ internal/database의 자동생성된 구조체를 쓰는 대신 여기서 구조체를 정의해서 편하게 수정 가능하도록 하기
 type Event struct {
-	Name       string
 	Tag        int32
 	TagText    string
 	StartsAt   pgtype.Timestamptz
 	EndsAt     pgtype.Timestamptz
-	EventUrl   string
+	PostNames  []string
+	EventUrls  []string
 	SiteName   string
 	SiteUrl    string
 	EventCalID string // google 캘린더에 저장될 때 생성되는 id를 저장하는 필드
@@ -222,7 +222,11 @@ func AddEvent(srv *calendar.Service, calendarID string, data *Event) error {
 
 	name := "(" + data.SiteName + ") " + data.TagText
 
-	desc := data.Name + " (" + data.EventUrl + ")"
+	desc := ""
+
+	for i, name := range data.PostNames {
+		desc += name + " (" + data.EventUrls[i] + ")\n"
+	}
 
 	event := &calendar.Event{
 		Summary:     name,

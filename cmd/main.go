@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/paokimsiwoong/game_event_tracker/internal/calendar"
 	"github.com/paokimsiwoong/game_event_tracker/internal/commands"
 	"github.com/paokimsiwoong/game_event_tracker/internal/config"
 	"github.com/paokimsiwoong/game_event_tracker/internal/database"
@@ -17,7 +18,7 @@ import (
 func main() {
 	cfg, err := config.Read()
 	if err != nil {
-		log.Fatalf("Fatal: %v", err)
+		log.Fatalf("error calling config.Read: %v", err)
 	}
 
 	// @@@ pgx native API를 사용하도록 변경
@@ -34,17 +35,24 @@ func main() {
 	ctx := context.Background()
 	conn, err := pgx.Connect(ctx, cfg.DBURL)
 	if err != nil {
-		log.Fatalf("error connecting to db : %v", err)
+		log.Fatalf("error connecting to db: %v", err)
 	}
 	defer conn.Close(ctx)
 
 	// sqlc가 생성한 database 패키지 사용
 	dbQueries := database.New(conn)
 
+	// Google Calender API client 생성
+	srv, err := calendar.NewCalendar()
+	if err != nil {
+		log.Fatalf("error creating Google Calender API client: %v", err)
+	}
+
 	// state, commands 구조체들 초기화
 	stateInstance := commands.State{
-		PtrCfg: &cfg,
-		PtrDB:  dbQueries,
+		PtrCfg:    &cfg,
+		PtrDB:     dbQueries,
+		PtrCalSrv: srv,
 	}
 	cmds := commands.Commands{
 		CommandMap: make(map[string]func(*commands.State, commands.Command) error),
