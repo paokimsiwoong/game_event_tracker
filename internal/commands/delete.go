@@ -11,8 +11,9 @@ import (
 func HandlerDelete(s *State, cmd Command) error {
 	// delete 뒤의 추가 명령어들은 cmd.args에 저장되어 있음
 
+	switch cmd.Args[0] {
 	// 첫번째 추가 명령어가 site이면
-	if cmd.Args[0] == "site" {
+	case "site":
 		// args의 길이가 3이 아니면 delete site <n, name, u, url> <n이면 이름, u면 url> 형태가 아니므로 에러
 		if len(cmd.Args) != 3 {
 			return errors.New("the delete site command expects two additional arguments, keyword type(one of n, name, u, url) and keyword value")
@@ -52,10 +53,13 @@ func HandlerDelete(s *State, cmd Command) error {
 		fmt.Printf("site %s(url: %s) has been deleted\n", site.Name, site.Url)
 
 		return nil
-	} else if cmd.Args[0] == "post" {
+
+	// 첫번째 추가 명령어가 post이면
+	case "post":
 		if len(cmd.Args) == 2 {
+			switch cmd.Args[1] {
 			// DeleteOldPosts
-			if cmd.Args[1] == "old" {
+			case "old":
 				err := s.PtrDB.DeleteOldPosts(context.Background())
 				if err != nil {
 					return fmt.Errorf("error deleting old posts: %w", err)
@@ -63,8 +67,9 @@ func HandlerDelete(s *State, cmd Command) error {
 				fmt.Println("Old posts have been deleted")
 
 				return nil
-			} else if cmd.Args[1] == "all" {
-				// ResetPosts
+
+			// ResetPosts
+			case "all":
 				err := s.PtrDB.ResetPosts(context.Background())
 				if err != nil {
 					return fmt.Errorf("error deleting all posts: %w", err)
@@ -73,6 +78,7 @@ func HandlerDelete(s *State, cmd Command) error {
 
 				return nil
 			}
+
 			return errors.New("the delete post command expects one or two additional arguments in the form of <one of old, all, name, n, url, u> <(if name, n) name_value, (if url, u) url_value>")
 
 		} else if len(cmd.Args) == 3 {
@@ -112,9 +118,10 @@ func HandlerDelete(s *State, cmd Command) error {
 		}
 
 		return errors.New("the delete post command expects one or two additional arguments in the form of <one of old, all, name, n, url, u> <(if name, n) name_value, (if url, u) url_value>")
-	} else {
+	default:
 		return errors.New("the delete handler expects its first argument to be either site or events")
 	}
+
 }
 
 // // DB에 site 추가하는 "deletesite" command 입력 시 실행되는 함수
