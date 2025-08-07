@@ -127,6 +127,8 @@ func HandlerDelete(s *State, cmd Command) error {
 			return fmt.Errorf("error deleting calendar events: error getting event data from db: %w", err)
 		}
 
+		count := 0
+
 		for _, event := range events {
 			data := &calendar.Event{
 				Tag:        event.Tag,
@@ -152,7 +154,9 @@ func HandlerDelete(s *State, cmd Command) error {
 					fmt.Printf("Failed to delete the event %v in Google Calendar: %v\n", data.EventCalID, err)
 					continue
 				}
+
 				fmt.Printf("The event %v deleted in Google Calendar\n", data.EventCalID)
+				count++
 			} else {
 				fmt.Printf("The event %v is not in Google Calendar\n", data.EventCalID)
 			}
@@ -164,9 +168,11 @@ func HandlerDelete(s *State, cmd Command) error {
 			return fmt.Errorf("error reseting events table in db: %w", err)
 		}
 
+		fmt.Printf("%v events in db deleted\n %v events in Google Calendar deleted\n", len(events), count)
+
 		return nil
 	default:
-		return errors.New("the delete handler expects its first argument to be either site or events")
+		return errors.New("the delete handler expects its first argument to be one of site, post, or event")
 	}
 
 }

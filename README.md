@@ -12,18 +12,31 @@ game-event-calendar/
 │   ├── commands/          // CLI 명령어 기능
 │   │   ├── commands.go
 │   │   ├── addsite.go
-│   │   ├── deletesite.go
-│   │   └── sites.go
+│   │   ├── sites.go
+│   │   ├── crawl.go
+│   │   ├── posts.go
+│   │   ├── events.go
+│   │   ├── cal.go
+│   │   └── delete.go
 │   ├── crawler/           // 웹 크롤러(공지 긁어오기)
 │   │   └── crawler.go
 │   ├── parser/            // 일정 정보 파싱
 │   │   └── parser.go
 │   ├── calendar/          // 구글 캘린더 연동
 │   │   └── calendar.go
+│   ├── database/          // sqlc 생성 코드
+│   │   ├── db.go
+│   │   ├── models.go
+│   │   ├── sites.sql.go
+│   │   ├── posts.sql.go
+│   │   └── evetns.sql.go
 │   └── config/            // 설정(토큰, URL 등)
 │       └── config.go
 ├── go.mod
+├── sqlc.yaml
+├── .env
 └── README.md
 ```
 
 TODO: https://sv-news.pokemon.co.jp/ko/page/373.html, https://sv-news.pokemon.co.jp/ko/page/370.html 과 같이 한 게시글에 테라레이드 기간과 이후의 이상한 소포 선물 기간이 같이 있는 경우 이상한 소포 선물 기간의 tag와 tag text가 1, 테라 레이드배틀이 되는 문제 해결?
+TODO: 에픽게임즈 스토어

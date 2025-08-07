@@ -11,9 +11,10 @@ type Config struct {
 	// db 연결 커넥션 스트링
 	DBURL string
 	// 일정을 저장할 구글 캘린더의 아이디
-	CalendarID  string
-	Platform    string
-	tokenSecret string
+	CalendarID           string
+	Platform             string
+	ClientSecretFilePath string
+	TokFilePath          string
 }
 
 // home 디렉토리에 있는 .gatorconfig.json 파일을 읽어와 Config 구조체에 저장하고 반환하는 함수
@@ -32,13 +33,17 @@ func Read() (Config, error) {
 		calendarID = "primary"
 	}
 	platform := os.Getenv("PLATFORM")
-	tokenSecret := os.Getenv("TOKEN_SECRET")
+
+	// OAuth 2.0 관련 파일 경로
+	clientSecretFilePath := os.Getenv("CLIENT_SECRET_FILE_PATH")
+	tokFilePath := os.Getenv("TOKEN_FILE_PATH")
 
 	config := Config{
-		DBURL:       dbURL,
-		CalendarID:  calendarID,
-		Platform:    platform,
-		tokenSecret: tokenSecret,
+		DBURL:                dbURL,
+		CalendarID:           calendarID,
+		Platform:             platform,
+		ClientSecretFilePath: clientSecretFilePath,
+		TokFilePath:          tokFilePath,
 	}
 
 	return config, nil

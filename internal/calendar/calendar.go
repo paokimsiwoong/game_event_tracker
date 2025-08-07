@@ -23,17 +23,16 @@ import (
 
 var ErrTemp = errors.New("temp")
 
-const clientSecretFilePath = "../../client_secret.json"
-const tokFilePath = "../../token.json"
+// const clientSecretFilePath = "../../client_secret.json"
+// const tokFilePath = "../../token.json"
 
 // 사용자 인증 토큰 가져오기
-func getToken(config *oauth2.Config) (*oauth2.Token, error) {
-	tokFile := tokFilePath
-	tok, err := tokenFromFile(tokFile)
+func getToken(config *oauth2.Config, tokFilePath string) (*oauth2.Token, error) {
+	tok, err := tokenFromFile(tokFilePath)
 	if err != nil {
 		// 사용자 인증 토큰이 없을 경우
 		tok, err = getTokenFromWeb(config)
-		saveToken(tokFile, tok)
+		saveToken(tokFilePath, tok)
 	}
 	// @@@ refresh 토큰 정보가 있으므로 만료된 토큰을 oauth2.TokenSource를 사용해 자동 갱신 가능
 	// } else if time.Now().After(tok.Expiry) {
@@ -124,7 +123,7 @@ func (s *savingTokenSource) Token() (*oauth2.Token, error) {
 }
 
 // Google Calender API client를 생성하는 함수
-func NewCalendar() (*calendar.Service, error) {
+func NewCalendar(clientSecretFilePath, tokFilePath string) (*calendar.Service, error) {
 	// 1. 인증 정보 로드
 	b, err := os.ReadFile(clientSecretFilePath)
 	// client_secret.json는 OAuth 클라이언트 인증 정보를 담고 있음
@@ -150,7 +149,7 @@ func NewCalendar() (*calendar.Service, error) {
 	}
 
 	// getToken함수로 OAuth2 access token 생성
-	token, err := getToken(config)
+	token, err := getToken(config, tokFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("OAuth2 access token 생성 실패: %v", err)
 	}
@@ -213,7 +212,9 @@ type Event struct {
 // 이벤트 데이터를 받아 구글 캘린더에 일정을 추가하는 함수
 func AddEvent(srv *calendar.Service, calendarID string, data *Event) error {
 	start := data.StartsAt.Time.Format(time.RFC3339)
+
 	var end string
+	// 이벤트 종료시점이 없는 경우와 있는 경우 구분
 	if data.EndsAt.Valid {
 		end = data.EndsAt.Time.Format(time.RFC3339)
 	} else {

@@ -43,7 +43,7 @@ func main() {
 	dbQueries := database.New(conn)
 
 	// Google Calender API client 생성
-	srv, err := calendar.NewCalendar()
+	srv, err := calendar.NewCalendar(cfg.ClientSecretFilePath, cfg.TokFilePath)
 	if err != nil {
 		log.Fatalf("error creating Google Calender API client: %v", err)
 	}
