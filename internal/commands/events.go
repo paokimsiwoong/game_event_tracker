@@ -30,6 +30,12 @@ func HandlerEvents(s *State, cmd Command) error {
 	}
 
 	for _, post := range posts {
+		// 이미 등록된 post면 continue
+		if post.Registered {
+			fmt.Printf("The post %s(url:%s) has already been registered to events table in db\n", post.Name, post.PostUrl)
+			continue
+		}
+
 		event, err := s.PtrDB.CreateEvent(context.Background(), database.CreateEventParams{
 			Tag:      post.Tag,
 			TagText:  post.TagText,
@@ -49,6 +55,7 @@ func HandlerEvents(s *State, cmd Command) error {
 			count++
 		}
 
+		// 등록 완료한 post는 registered 칼럼 값 true로 변경
 		err = s.PtrDB.SetPostRegisteredTrue(context.Background(), post.ID)
 		if err != nil {
 			return fmt.Errorf("error updating a post: %w", err)
@@ -87,6 +94,9 @@ func HandlerEvents(s *State, cmd Command) error {
 
 		fmt.Println("--------------------------------------------------")
 	}
+	fmt.Println("--------------------------------------------------")
+	fmt.Printf("%d events in events table\n", len(events))
+	fmt.Println("--------------------------------------------------")
 	fmt.Println("--------------------------------------------------")
 
 	return nil

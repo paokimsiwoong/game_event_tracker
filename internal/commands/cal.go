@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/paokimsiwoong/game_event_tracker/internal/calendar"
+	"github.com/paokimsiwoong/game_event_tracker/internal/database"
 )
 
 // db에 저장된 event들을 구글 캘린더에 일정으로 등록하는 핸들러
@@ -23,7 +25,16 @@ func HandlerCalendar(s *State, cmd Command) error {
 			// 이미 구글 캘린더에 등록된 경우면 EventCalID 값이 존재
 			// => event.EventCalID.Valid이 true
 			if event.EventCalID.Valid {
-				continue
+				check, err := calendar.CheckEvent(s.PtrCalSrv, s.PtrCfg.CalendarID, event.EventCalID.String)
+				if err != nil {
+					return fmt.Errorf("error registering calendar events: error calling calendar.CheckEvent: %w", err)
+				}
+				if check {
+					fmt.Printf("Event %v with cal id %s has already been added to Google Calendar\n", event.ID, event.EventCalID.String)
+					continue
+				}
+
+				fmt.Printf("Can't find the event %v with cal id %s in Google Calendar\nWill register the event again with a new cal id\n", event.ID, event.EventCalID.String)
 			}
 
 			data := &calendar.Event{
@@ -41,6 +52,22 @@ func HandlerCalendar(s *State, cmd Command) error {
 			if err != nil {
 				return fmt.Errorf("error registering calendar events: error calling calendar.AddEvent: %w", err)
 			}
+			// calendar.AddEvent를 실행하고 나면 data의 EventCalID 필드 값이 차있다
+			// // 이 필드 값을 db에 저장해야 한다
+
+			// @@@ db에 구글 캘린더에 등록된 event 아이디(data의 EventCalID 필드)를 입력
+			err = s.PtrDB.SetEventCalIDByID(context.Background(), database.SetEventCalIDByIDParams{
+				EventCalID: pgtype.Text{
+					String: data.EventCalID,
+					Valid:  true,
+				},
+				ID: event.ID,
+			})
+			if err != nil {
+				return fmt.Errorf("error registering calendar events: error updating events table: %w", err)
+			}
+
+			fmt.Printf("Event with cal id %s registered\n", data.EventCalID)
 
 			count++
 		}
@@ -80,6 +107,22 @@ func HandlerCalendar(s *State, cmd Command) error {
 			if err != nil {
 				return fmt.Errorf("error registering calendar events: error calling calendar.AddEvent: %w", err)
 			}
+			// calendar.AddEvent를 실행하고 나면 data의 EventCalID 필드 값이 차있다
+			// // 이 필드 값을 db에 저장해야 한다
+
+			// @@@ db에 구글 캘린더에 등록된 event 아이디(data의 EventCalID 필드)를 입력
+			err = s.PtrDB.SetEventCalIDByID(context.Background(), database.SetEventCalIDByIDParams{
+				EventCalID: pgtype.Text{
+					String: data.EventCalID,
+					Valid:  true,
+				},
+				ID: event.ID,
+			})
+			if err != nil {
+				return fmt.Errorf("error registering calendar events: error updating events table: %w", err)
+			}
+
+			fmt.Printf("Event with cal id %s registered\n", data.EventCalID)
 
 			count++
 		}

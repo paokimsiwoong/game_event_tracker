@@ -61,6 +61,9 @@ func HandlerPosts(s *State, cmd Command) error {
 			fmt.Println("--------------------------------------------------")
 		}
 		fmt.Println("--------------------------------------------------")
+		fmt.Printf("%d posts in the table\n", len(posts))
+		fmt.Println("--------------------------------------------------")
+		fmt.Println("--------------------------------------------------")
 
 		return nil
 
@@ -112,6 +115,9 @@ func HandlerPosts(s *State, cmd Command) error {
 			fmt.Println("--------------------------------------------------")
 		}
 		fmt.Println("--------------------------------------------------")
+		fmt.Printf("%d ongoing posts in the table\n", len(posts))
+		fmt.Println("--------------------------------------------------")
+		fmt.Println("--------------------------------------------------")
 
 		return nil
 	} else if len(cmd.Args) == 2 && cmd.Args[0] == "period" {
@@ -131,7 +137,7 @@ func HandlerPosts(s *State, cmd Command) error {
 
 		fmt.Println("--------------------------------------------------")
 		fmt.Println("--------------------------------------------------")
-		fmt.Printf("There are %d posts in the table with an end time within the last %d days\n", len(posts), p)
+		fmt.Printf("There are %d posts in the table with an end time after %d days ago\n", len(posts), p)
 		fmt.Println("--------------------------------------------------")
 		fmt.Println("--------------------------------------------------")
 
@@ -165,6 +171,9 @@ func HandlerPosts(s *State, cmd Command) error {
 			)
 			fmt.Println("--------------------------------------------------")
 		}
+		fmt.Println("--------------------------------------------------")
+		fmt.Printf("There are %d posts in the table with an end time after %d days ago\n", len(posts), p)
+		fmt.Println("--------------------------------------------------")
 		fmt.Println("--------------------------------------------------")
 
 		return nil

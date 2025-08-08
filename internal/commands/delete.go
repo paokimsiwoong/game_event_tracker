@@ -131,18 +131,25 @@ func HandlerDelete(s *State, cmd Command) error {
 
 		for _, event := range events {
 			data := &calendar.Event{
-				Tag:        event.Tag,
-				TagText:    event.TagText,
-				StartsAt:   event.StartsAt,
-				EndsAt:     event.EndsAt,
-				PostNames:  event.Names,
-				EventUrls:  event.PostUrls,
-				SiteName:   event.SiteName,
-				SiteUrl:    event.SiteUrl,
-				EventCalID: event.EventCalID.String,
+				Tag:       event.Tag,
+				TagText:   event.TagText,
+				StartsAt:  event.StartsAt,
+				EndsAt:    event.EndsAt,
+				PostNames: event.Names,
+				EventUrls: event.PostUrls,
+				SiteName:  event.SiteName,
+				SiteUrl:   event.SiteUrl,
 			}
 
-			check, err := calendar.CheckEvent(s.PtrCalSrv, s.PtrCfg.CalendarID, data)
+			if event.EventCalID.Valid {
+				data.EventCalID = event.EventCalID.String
+				fmt.Printf("cal id: %s\n", event.EventCalID.String)
+			} else {
+				fmt.Printf("The event %v has not been added to Goole Calendar\n", event.ID)
+				continue
+			}
+
+			check, err := calendar.CheckEvent(s.PtrCalSrv, s.PtrCfg.CalendarID, data.EventCalID)
 			if err != nil {
 				fmt.Printf("Failed to check if an event %v is in Google Calendar: %v\n", data.EventCalID, err)
 				continue
@@ -155,10 +162,10 @@ func HandlerDelete(s *State, cmd Command) error {
 					continue
 				}
 
-				fmt.Printf("The event %v deleted in Google Calendar\n", data.EventCalID)
+				fmt.Printf("The event %v with cal id %v deleted in Google Calendar\n", event.ID, data.EventCalID)
 				count++
 			} else {
-				fmt.Printf("The event %v is not in Google Calendar\n", data.EventCalID)
+				fmt.Printf("The event %v with cal id %v is not in Google Calendar\n", event.ID, data.EventCalID)
 			}
 		}
 
@@ -167,6 +174,7 @@ func HandlerDelete(s *State, cmd Command) error {
 		if err != nil {
 			return fmt.Errorf("error reseting events table in db: %w", err)
 		}
+		// @@@@@@@@ events 테이블 초기화 하면서 posts 테이블의 registered 칼럼 값 다시 false로 변경?
 
 		fmt.Printf("%v events in db deleted\n %v events in Google Calendar deleted\n", len(events), count)
 

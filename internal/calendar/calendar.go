@@ -257,8 +257,8 @@ func AddEvent(srv *calendar.Service, calendarID string, data *Event) error {
 }
 
 // 해당 ID를 가진 이벤트가 구글 캘린더에 있는지 확인하는 함수
-func CheckEvent(srv *calendar.Service, calendarID string, data *Event) (bool, error) {
-	_, err := srv.Events.Get(calendarID, data.EventCalID).Do()
+func CheckEvent(srv *calendar.Service, calendarID string, eventCalID string) (bool, error) {
+	_, err := srv.Events.Get(calendarID, eventCalID).Do()
 	if err != nil {
 		// get 요청이 실패했을 때, 이벤트가 없어서 에러가 난건지, 그 외 이유인지 구분하기
 		if googleAPIErr, ok := err.(*googleapi.Error); ok && googleAPIErr.Code == 404 {

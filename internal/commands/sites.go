@@ -43,6 +43,9 @@ func HandlerSites(s *State, cmd Command) error {
 		fmt.Println("--------------------------------------------------")
 	}
 	fmt.Println("--------------------------------------------------")
+	fmt.Printf("%d sites in the table\n", len(sites))
+	fmt.Println("--------------------------------------------------")
+	fmt.Println("--------------------------------------------------")
 
 	return nil
 }
