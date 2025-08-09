@@ -256,6 +256,53 @@ func AddEvent(srv *calendar.Service, calendarID string, data *Event) error {
 	return nil
 }
 
+// 이벤트 데이터를 받아 구글 캘린더에 일정과 리마인드를 추가하는 함수
+func AddEventWithReminds(srv *calendar.Service, calendarID string, data *Event) error {
+	start := data.StartsAt.Time.Format(time.RFC3339)
+
+	var end string
+	// 이벤트 종료시점이 없는 경우와 있는 경우 구분
+	if data.EndsAt.Valid {
+		end = data.EndsAt.Time.Format(time.RFC3339)
+	} else {
+		end = data.StartsAt.Time.Add(time.Hour).Format(time.RFC3339)
+	}
+
+	name := "(" + data.SiteName + ") " + data.TagText
+
+	desc := ""
+
+	for i, name := range data.PostNames {
+		desc += name + " (" + data.EventUrls[i] + ")\n"
+	}
+
+	event := &calendar.Event{
+		Summary:     name,
+		Location:    "서울",
+		Description: desc,
+		Start: &calendar.EventDateTime{
+			DateTime: start,
+			TimeZone: "Asia/Seoul",
+		},
+		End: &calendar.EventDateTime{
+			DateTime: end,
+			TimeZone: "Asia/Seoul",
+		},
+	}
+
+	event, err := srv.Events.Insert(calendarID, event).Do()
+	if err != nil {
+		// log.Fatalf("일정 생성 실패: %v", err)
+		return fmt.Errorf("일정 생성 실패: %v", err)
+	}
+	fmt.Printf("이벤트 생성됨: %s\n", event.HtmlLink)
+
+	// srv.Events.Insert 호출 후 반환되는 event안에는 id 부분이 생성되어 있음
+	data.EventCalID = event.Id
+
+	return nil
+}
+
 // 해당 ID를 가진 이벤트가 구글 캘린더에 있는지 확인하는 함수
 func CheckEvent(srv *calendar.Service, calendarID string, eventCalID string) (bool, error) {
 	_, err := srv.Events.Get(calendarID, eventCalID).Do()
@@ -278,8 +325,8 @@ func CheckEvent(srv *calendar.Service, calendarID string, eventCalID string) (bo
 }
 
 // 이전에 추가한 이벤트를 구글 캘린더에서 삭제하는 함수
-func DeleteEvent(srv *calendar.Service, calendarID string, data *Event) error {
-	return srv.Events.Delete(calendarID, data.EventCalID).Do()
+func DeleteEvent(srv *calendar.Service, calendarID string, eventCalID string) error {
+	return srv.Events.Delete(calendarID, eventCalID).Do()
 }
 
 func TestCalendar(srv *calendar.Service) error {

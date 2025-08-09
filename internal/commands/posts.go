@@ -120,6 +120,59 @@ func HandlerPosts(s *State, cmd Command) error {
 		fmt.Println("--------------------------------------------------")
 
 		return nil
+	} else if len(cmd.Args) == 1 && cmd.Args[0] == "upcoming" {
+		posts, err := s.PtrDB.GetPostsOnGoingAndUpcoming(context.Background())
+		if err != nil {
+			return fmt.Errorf("error getting posts table: %w", err)
+		}
+
+		fmt.Println("--------------------------------------------------")
+		fmt.Println("--------------------------------------------------")
+		fmt.Printf("%d ongoing and upcoming posts in the table\n", len(posts))
+		fmt.Println("--------------------------------------------------")
+		fmt.Println("--------------------------------------------------")
+
+		if len(posts) == 0 {
+			return nil
+		}
+
+		for _, post := range posts {
+			if post.EndsAt.Valid {
+				fmt.Printf(
+					"Name: %s\nCreated at: %v\nPosted at: %v\nTag: %v\nTag text: %v\nStarts at: %v\nEnds at: %v\nPost url: %v\nSite name: %v\nSite url: %v\n",
+					post.Name,
+					post.CreatedAt,
+					post.PostedAt,
+					post.Tag,
+					post.TagText,
+					post.StartsAt.Time,
+					post.EndsAt.Time,
+					post.PostUrl,
+					post.SiteName,
+					post.SiteUrl,
+				)
+			} else {
+				fmt.Printf(
+					"Name: %s\nCreated at: %v\nPosted at: %v\nTag: %v\nTag text: %v\nStarts at: %v\nEnds at: permanent\nPost url: %v\nSite name: %v\nSite url: %v\n",
+					post.Name,
+					post.CreatedAt,
+					post.PostedAt,
+					post.Tag,
+					post.TagText,
+					post.StartsAt.Time,
+					post.PostUrl,
+					post.SiteName,
+					post.SiteUrl,
+				)
+			}
+			fmt.Println("--------------------------------------------------")
+		}
+		fmt.Println("--------------------------------------------------")
+		fmt.Printf("%d ongoing and upcoming posts in the table\n", len(posts))
+		fmt.Println("--------------------------------------------------")
+		fmt.Println("--------------------------------------------------")
+
+		return nil
 	} else if len(cmd.Args) == 2 && cmd.Args[0] == "period" {
 		now := time.Now()
 		p, err := strconv.Atoi(cmd.Args[1])

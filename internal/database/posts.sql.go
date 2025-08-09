@@ -539,6 +539,68 @@ func (q *Queries) GetPostsOnGoingAndSites(ctx context.Context) ([]GetPostsOnGoin
 	return items, nil
 }
 
+const getPostsOnGoingAndUpcoming = `-- name: GetPostsOnGoingAndUpcoming :many
+SELECT posts.id, posts.created_at, posts.updated_at, posts.name, posts.tag, posts.tag_text, posts.posted_at, posts.starts_at, posts.ends_at, posts.body, posts.post_url, posts.site_id, posts.registered, sites.name AS site_name, sites.url AS site_url FROM posts
+INNER JOIN sites
+ON posts.site_id = sites.id
+WHERE (posts.ends_at IS NULL OR posts.ends_at >= NOW())
+ORDER BY posts.posted_at DESC, posts.starts_at DESC
+`
+
+type GetPostsOnGoingAndUpcomingRow struct {
+	ID         pgtype.UUID
+	CreatedAt  pgtype.Timestamptz
+	UpdatedAt  pgtype.Timestamptz
+	Name       string
+	Tag        int32
+	TagText    string
+	PostedAt   pgtype.Timestamptz
+	StartsAt   pgtype.Timestamptz
+	EndsAt     pgtype.Timestamptz
+	Body       string
+	PostUrl    string
+	SiteID     pgtype.UUID
+	Registered bool
+	SiteName   string
+	SiteUrl    string
+}
+
+func (q *Queries) GetPostsOnGoingAndUpcoming(ctx context.Context) ([]GetPostsOnGoingAndUpcomingRow, error) {
+	rows, err := q.db.Query(ctx, getPostsOnGoingAndUpcoming)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetPostsOnGoingAndUpcomingRow
+	for rows.Next() {
+		var i GetPostsOnGoingAndUpcomingRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Name,
+			&i.Tag,
+			&i.TagText,
+			&i.PostedAt,
+			&i.StartsAt,
+			&i.EndsAt,
+			&i.Body,
+			&i.PostUrl,
+			&i.SiteID,
+			&i.Registered,
+			&i.SiteName,
+			&i.SiteUrl,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getPostsWithinGivenPeriod = `-- name: GetPostsWithinGivenPeriod :many
 SELECT posts.id, posts.created_at, posts.updated_at, posts.name, posts.tag, posts.tag_text, posts.posted_at, posts.starts_at, posts.ends_at, posts.body, posts.post_url, posts.site_id, posts.registered, sites.name AS site_name, sites.url AS site_url FROM posts
 INNER JOIN sites
@@ -630,6 +692,17 @@ func (q *Queries) SetPostDates(ctx context.Context, arg SetPostDatesParams) erro
 		arg.EndsAt,
 		arg.ID,
 	)
+	return err
+}
+
+const setPostRegisteredFalse = `-- name: SetPostRegisteredFalse :exec
+UPDATE posts
+SET updated_at = NOW(), registered = false
+WHERE id = $1
+`
+
+func (q *Queries) SetPostRegisteredFalse(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, setPostRegisteredFalse, id)
 	return err
 }
 

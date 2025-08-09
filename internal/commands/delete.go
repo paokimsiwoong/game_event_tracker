@@ -120,6 +120,8 @@ func HandlerDelete(s *State, cmd Command) error {
 		}
 
 		return errors.New("the delete post command expects one or two additional arguments in the form of <one of old, all, name, n, url, u> <(if name, n) name_value, (if url, u) url_value>")
+
+	// 첫번째 추가 명령어가 event이면
 	case "event":
 		// db에서 이벤트들을 삭제하기전에 불러와서 event_cal_id 칼럼의 데이터를 이용해 구글 캘린더에서 삭제부터 하기
 		events, err := s.PtrDB.GetEventsAndSite(context.Background())
@@ -130,43 +132,41 @@ func HandlerDelete(s *State, cmd Command) error {
 		count := 0
 
 		for _, event := range events {
-			data := &calendar.Event{
-				Tag:       event.Tag,
-				TagText:   event.TagText,
-				StartsAt:  event.StartsAt,
-				EndsAt:    event.EndsAt,
-				PostNames: event.Names,
-				EventUrls: event.PostUrls,
-				SiteName:  event.SiteName,
-				SiteUrl:   event.SiteUrl,
+
+			// @@@@@@@@ events 테이블 초기화 하면서 posts 테이블의 registered 칼럼 값 다시 false로 변경
+			for _, postId := range event.PostIds {
+				err = s.PtrDB.SetPostRegisteredFalse(context.Background(), postId)
+				if err != nil {
+					return fmt.Errorf("error deleting calendar events: error updating a post: %w", err)
+				}
 			}
 
-			if event.EventCalID.Valid {
-				data.EventCalID = event.EventCalID.String
-				fmt.Printf("cal id: %s\n", event.EventCalID.String)
-			} else {
+			if len(event.EventCalIds) == 0 {
 				fmt.Printf("The event %v has not been added to Goole Calendar\n", event.ID)
 				continue
 			}
 
-			check, err := calendar.CheckEvent(s.PtrCalSrv, s.PtrCfg.CalendarID, data.EventCalID)
-			if err != nil {
-				fmt.Printf("Failed to check if an event %v is in Google Calendar: %v\n", data.EventCalID, err)
-				continue
-			}
+			for _, eventCalID := range event.EventCalIds {
 
-			if check {
-				err = calendar.DeleteEvent(s.PtrCalSrv, s.PtrCfg.CalendarID, data)
+				check, err := calendar.CheckEvent(s.PtrCalSrv, s.PtrCfg.CalendarID, eventCalID)
 				if err != nil {
-					fmt.Printf("Failed to delete the event %v in Google Calendar: %v\n", data.EventCalID, err)
+					fmt.Printf("Failed to check if an event %v is in Google Calendar: %v\n", eventCalID, err)
 					continue
 				}
+				if check {
+					err = calendar.DeleteEvent(s.PtrCalSrv, s.PtrCfg.CalendarID, eventCalID)
+					if err != nil {
+						fmt.Printf("Failed to delete the event %v in Google Calendar: %v\n", eventCalID, err)
+						continue
+					}
 
-				fmt.Printf("The event %v with cal id %v deleted in Google Calendar\n", event.ID, data.EventCalID)
-				count++
-			} else {
-				fmt.Printf("The event %v with cal id %v is not in Google Calendar\n", event.ID, data.EventCalID)
+					fmt.Printf("The event %v with cal id %v deleted in Google Calendar\n", event.ID, eventCalID)
+					count++
+				} else {
+					fmt.Printf("The event %v with cal id %v is not in Google Calendar\n", event.ID, eventCalID)
+				}
 			}
+
 		}
 
 		// db events 테이블 초기화
@@ -174,7 +174,6 @@ func HandlerDelete(s *State, cmd Command) error {
 		if err != nil {
 			return fmt.Errorf("error reseting events table in db: %w", err)
 		}
-		// @@@@@@@@ events 테이블 초기화 하면서 posts 테이블의 registered 칼럼 값 다시 false로 변경?
 
 		fmt.Printf("%v events in db deleted\n %v events in Google Calendar deleted\n", len(events), count)
 

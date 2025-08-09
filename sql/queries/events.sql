@@ -58,6 +58,13 @@ ON events.site_id = sites.id
 WHERE events.starts_at <= NOW() AND (events.ends_at IS NULL OR events.ends_at >= NOW())
 ORDER BY events.starts_at DESC, events.ends_at DESC;
 
+-- name: GetEventsOnGoingAndUpcoming :many
+SELECT events.*, sites.name AS site_name, sites.url AS site_url FROM events
+INNER JOIN sites
+ON events.site_id = sites.id
+WHERE (events.ends_at IS NULL OR events.ends_at >= NOW())
+ORDER BY events.starts_at DESC, events.ends_at DESC;
+
 -- name: GetEventsWithinGivenPeriod :many
 SELECT events.*, sites.name AS site_name, sites.url AS site_url FROM events
 INNER JOIN sites
@@ -74,12 +81,17 @@ ORDER BY events.starts_at DESC, events.ends_at DESC;
 
 -- name: SetEventCalID :exec
 UPDATE events
-SET updated_at = NOW(), event_cal_id = $1
+SET updated_at = NOW(), event_cal_ids = array_append(event_cal_ids, $1::TEXT)
 WHERE tag = $2 AND starts_at = $3 AND ends_at = $4;
 
 -- name: SetEventCalIDByID :exec
 UPDATE events
-SET updated_at = NOW(), event_cal_id = $1
+SET updated_at = NOW(), event_cal_ids = array_append(event_cal_ids, $1::TEXT)
+WHERE id = $2;
+
+-- name: SetEventCalIDsByID :exec
+UPDATE events
+SET updated_at = NOW(), event_cal_ids = array_cat(event_cal_ids, $1::TEXT[])
 WHERE id = $2;
 
 -- name: DeleteEventByID :exec

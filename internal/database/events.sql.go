@@ -33,7 +33,7 @@ posted_ats = array_append(events.posted_ats, $6::TIMESTAMP WITH TIME ZONE),
 post_urls = array_append(events.post_urls, $7::TEXT),
 post_ids = array_append(events.post_ids, $8::UUID),
 updated_at = NOW()
-RETURNING id, created_at, updated_at, tag, tag_text, starts_at, ends_at, event_cal_id, names, posted_ats, post_urls, post_ids, site_id
+RETURNING id, created_at, updated_at, tag, tag_text, starts_at, ends_at, event_cal_ids, names, posted_ats, post_urls, post_ids, site_id
 `
 
 type CreateEventParams struct {
@@ -69,7 +69,7 @@ func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (Event
 		&i.TagText,
 		&i.StartsAt,
 		&i.EndsAt,
-		&i.EventCalID,
+		&i.EventCalIds,
 		&i.Names,
 		&i.PostedAts,
 		&i.PostUrls,
@@ -134,7 +134,7 @@ func (q *Queries) DeleteOldEvents(ctx context.Context) error {
 }
 
 const getEventByID = `-- name: GetEventByID :one
-SELECT id, created_at, updated_at, tag, tag_text, starts_at, ends_at, event_cal_id, names, posted_ats, post_urls, post_ids, site_id FROM events
+SELECT id, created_at, updated_at, tag, tag_text, starts_at, ends_at, event_cal_ids, names, posted_ats, post_urls, post_ids, site_id FROM events
 WHERE id = $1
 `
 
@@ -149,7 +149,7 @@ func (q *Queries) GetEventByID(ctx context.Context, id pgtype.UUID) (Event, erro
 		&i.TagText,
 		&i.StartsAt,
 		&i.EndsAt,
-		&i.EventCalID,
+		&i.EventCalIds,
 		&i.Names,
 		&i.PostedAts,
 		&i.PostUrls,
@@ -160,7 +160,7 @@ func (q *Queries) GetEventByID(ctx context.Context, id pgtype.UUID) (Event, erro
 }
 
 const getEvents = `-- name: GetEvents :many
-SELECT id, created_at, updated_at, tag, tag_text, starts_at, ends_at, event_cal_id, names, posted_ats, post_urls, post_ids, site_id FROM events
+SELECT id, created_at, updated_at, tag, tag_text, starts_at, ends_at, event_cal_ids, names, posted_ats, post_urls, post_ids, site_id FROM events
 ORDER BY created_at
 `
 
@@ -181,7 +181,7 @@ func (q *Queries) GetEvents(ctx context.Context) ([]Event, error) {
 			&i.TagText,
 			&i.StartsAt,
 			&i.EndsAt,
-			&i.EventCalID,
+			&i.EventCalIds,
 			&i.Names,
 			&i.PostedAts,
 			&i.PostUrls,
@@ -199,28 +199,28 @@ func (q *Queries) GetEvents(ctx context.Context) ([]Event, error) {
 }
 
 const getEventsAndSite = `-- name: GetEventsAndSite :many
-SELECT events.id, events.created_at, events.updated_at, events.tag, events.tag_text, events.starts_at, events.ends_at, events.event_cal_id, events.names, events.posted_ats, events.post_urls, events.post_ids, events.site_id, sites.name AS site_name, sites.url AS site_url FROM events
+SELECT events.id, events.created_at, events.updated_at, events.tag, events.tag_text, events.starts_at, events.ends_at, events.event_cal_ids, events.names, events.posted_ats, events.post_urls, events.post_ids, events.site_id, sites.name AS site_name, sites.url AS site_url FROM events
 INNER JOIN sites
 ON events.site_id = sites.id
 ORDER BY events.starts_at DESC, events.ends_at DESC
 `
 
 type GetEventsAndSiteRow struct {
-	ID         pgtype.UUID
-	CreatedAt  pgtype.Timestamptz
-	UpdatedAt  pgtype.Timestamptz
-	Tag        int32
-	TagText    string
-	StartsAt   pgtype.Timestamptz
-	EndsAt     pgtype.Timestamptz
-	EventCalID pgtype.Text
-	Names      []string
-	PostedAts  []pgtype.Timestamptz
-	PostUrls   []string
-	PostIds    []pgtype.UUID
-	SiteID     pgtype.UUID
-	SiteName   string
-	SiteUrl    string
+	ID          pgtype.UUID
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+	Tag         int32
+	TagText     string
+	StartsAt    pgtype.Timestamptz
+	EndsAt      pgtype.Timestamptz
+	EventCalIds []string
+	Names       []string
+	PostedAts   []pgtype.Timestamptz
+	PostUrls    []string
+	PostIds     []pgtype.UUID
+	SiteID      pgtype.UUID
+	SiteName    string
+	SiteUrl     string
 }
 
 func (q *Queries) GetEventsAndSite(ctx context.Context) ([]GetEventsAndSiteRow, error) {
@@ -240,7 +240,7 @@ func (q *Queries) GetEventsAndSite(ctx context.Context) ([]GetEventsAndSiteRow, 
 			&i.TagText,
 			&i.StartsAt,
 			&i.EndsAt,
-			&i.EventCalID,
+			&i.EventCalIds,
 			&i.Names,
 			&i.PostedAts,
 			&i.PostUrls,
@@ -260,7 +260,7 @@ func (q *Queries) GetEventsAndSite(ctx context.Context) ([]GetEventsAndSiteRow, 
 }
 
 const getEventsBySiteID = `-- name: GetEventsBySiteID :many
-SELECT id, created_at, updated_at, tag, tag_text, starts_at, ends_at, event_cal_id, names, posted_ats, post_urls, post_ids, site_id FROM events
+SELECT id, created_at, updated_at, tag, tag_text, starts_at, ends_at, event_cal_ids, names, posted_ats, post_urls, post_ids, site_id FROM events
 WHERE site_id = $1
 ORDER BY created_at
 `
@@ -282,7 +282,7 @@ func (q *Queries) GetEventsBySiteID(ctx context.Context, siteID pgtype.UUID) ([]
 			&i.TagText,
 			&i.StartsAt,
 			&i.EndsAt,
-			&i.EventCalID,
+			&i.EventCalIds,
 			&i.Names,
 			&i.PostedAts,
 			&i.PostUrls,
@@ -300,7 +300,7 @@ func (q *Queries) GetEventsBySiteID(ctx context.Context, siteID pgtype.UUID) ([]
 }
 
 const getEventsByTag = `-- name: GetEventsByTag :many
-SELECT id, created_at, updated_at, tag, tag_text, starts_at, ends_at, event_cal_id, names, posted_ats, post_urls, post_ids, site_id FROM events
+SELECT id, created_at, updated_at, tag, tag_text, starts_at, ends_at, event_cal_ids, names, posted_ats, post_urls, post_ids, site_id FROM events
 WHERE tag = $1
 ORDER BY created_at
 `
@@ -322,7 +322,7 @@ func (q *Queries) GetEventsByTag(ctx context.Context, tag int32) ([]Event, error
 			&i.TagText,
 			&i.StartsAt,
 			&i.EndsAt,
-			&i.EventCalID,
+			&i.EventCalIds,
 			&i.Names,
 			&i.PostedAts,
 			&i.PostUrls,
@@ -340,7 +340,7 @@ func (q *Queries) GetEventsByTag(ctx context.Context, tag int32) ([]Event, error
 }
 
 const getEventsByTagText = `-- name: GetEventsByTagText :many
-SELECT id, created_at, updated_at, tag, tag_text, starts_at, ends_at, event_cal_id, names, posted_ats, post_urls, post_ids, site_id FROM events
+SELECT id, created_at, updated_at, tag, tag_text, starts_at, ends_at, event_cal_ids, names, posted_ats, post_urls, post_ids, site_id FROM events
 WHERE tag_text = $1
 ORDER BY created_at
 `
@@ -362,7 +362,7 @@ func (q *Queries) GetEventsByTagText(ctx context.Context, tagText string) ([]Eve
 			&i.TagText,
 			&i.StartsAt,
 			&i.EndsAt,
-			&i.EventCalID,
+			&i.EventCalIds,
 			&i.Names,
 			&i.PostedAts,
 			&i.PostUrls,
@@ -380,7 +380,7 @@ func (q *Queries) GetEventsByTagText(ctx context.Context, tagText string) ([]Eve
 }
 
 const getEventsOnGoing = `-- name: GetEventsOnGoing :many
-SELECT events.id, events.created_at, events.updated_at, events.tag, events.tag_text, events.starts_at, events.ends_at, events.event_cal_id, events.names, events.posted_ats, events.post_urls, events.post_ids, events.site_id, sites.name AS site_name, sites.url AS site_url FROM events
+SELECT events.id, events.created_at, events.updated_at, events.tag, events.tag_text, events.starts_at, events.ends_at, events.event_cal_ids, events.names, events.posted_ats, events.post_urls, events.post_ids, events.site_id, sites.name AS site_name, sites.url AS site_url FROM events
 INNER JOIN sites
 ON events.site_id = sites.id
 WHERE events.starts_at <= NOW() AND (events.ends_at IS NULL OR events.ends_at >= NOW())
@@ -388,21 +388,21 @@ ORDER BY events.starts_at DESC, events.ends_at DESC
 `
 
 type GetEventsOnGoingRow struct {
-	ID         pgtype.UUID
-	CreatedAt  pgtype.Timestamptz
-	UpdatedAt  pgtype.Timestamptz
-	Tag        int32
-	TagText    string
-	StartsAt   pgtype.Timestamptz
-	EndsAt     pgtype.Timestamptz
-	EventCalID pgtype.Text
-	Names      []string
-	PostedAts  []pgtype.Timestamptz
-	PostUrls   []string
-	PostIds    []pgtype.UUID
-	SiteID     pgtype.UUID
-	SiteName   string
-	SiteUrl    string
+	ID          pgtype.UUID
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+	Tag         int32
+	TagText     string
+	StartsAt    pgtype.Timestamptz
+	EndsAt      pgtype.Timestamptz
+	EventCalIds []string
+	Names       []string
+	PostedAts   []pgtype.Timestamptz
+	PostUrls    []string
+	PostIds     []pgtype.UUID
+	SiteID      pgtype.UUID
+	SiteName    string
+	SiteUrl     string
 }
 
 func (q *Queries) GetEventsOnGoing(ctx context.Context) ([]GetEventsOnGoingRow, error) {
@@ -422,7 +422,69 @@ func (q *Queries) GetEventsOnGoing(ctx context.Context) ([]GetEventsOnGoingRow, 
 			&i.TagText,
 			&i.StartsAt,
 			&i.EndsAt,
-			&i.EventCalID,
+			&i.EventCalIds,
+			&i.Names,
+			&i.PostedAts,
+			&i.PostUrls,
+			&i.PostIds,
+			&i.SiteID,
+			&i.SiteName,
+			&i.SiteUrl,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getEventsOnGoingAndUpcoming = `-- name: GetEventsOnGoingAndUpcoming :many
+SELECT events.id, events.created_at, events.updated_at, events.tag, events.tag_text, events.starts_at, events.ends_at, events.event_cal_ids, events.names, events.posted_ats, events.post_urls, events.post_ids, events.site_id, sites.name AS site_name, sites.url AS site_url FROM events
+INNER JOIN sites
+ON events.site_id = sites.id
+WHERE (events.ends_at IS NULL OR events.ends_at >= NOW())
+ORDER BY events.starts_at DESC, events.ends_at DESC
+`
+
+type GetEventsOnGoingAndUpcomingRow struct {
+	ID          pgtype.UUID
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+	Tag         int32
+	TagText     string
+	StartsAt    pgtype.Timestamptz
+	EndsAt      pgtype.Timestamptz
+	EventCalIds []string
+	Names       []string
+	PostedAts   []pgtype.Timestamptz
+	PostUrls    []string
+	PostIds     []pgtype.UUID
+	SiteID      pgtype.UUID
+	SiteName    string
+	SiteUrl     string
+}
+
+func (q *Queries) GetEventsOnGoingAndUpcoming(ctx context.Context) ([]GetEventsOnGoingAndUpcomingRow, error) {
+	rows, err := q.db.Query(ctx, getEventsOnGoingAndUpcoming)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetEventsOnGoingAndUpcomingRow
+	for rows.Next() {
+		var i GetEventsOnGoingAndUpcomingRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Tag,
+			&i.TagText,
+			&i.StartsAt,
+			&i.EndsAt,
+			&i.EventCalIds,
 			&i.Names,
 			&i.PostedAts,
 			&i.PostUrls,
@@ -442,7 +504,7 @@ func (q *Queries) GetEventsOnGoing(ctx context.Context) ([]GetEventsOnGoingRow, 
 }
 
 const getEventsWithinGivenPeriod = `-- name: GetEventsWithinGivenPeriod :many
-SELECT events.id, events.created_at, events.updated_at, events.tag, events.tag_text, events.starts_at, events.ends_at, events.event_cal_id, events.names, events.posted_ats, events.post_urls, events.post_ids, events.site_id, sites.name AS site_name, sites.url AS site_url FROM events
+SELECT events.id, events.created_at, events.updated_at, events.tag, events.tag_text, events.starts_at, events.ends_at, events.event_cal_ids, events.names, events.posted_ats, events.post_urls, events.post_ids, events.site_id, sites.name AS site_name, sites.url AS site_url FROM events
 INNER JOIN sites
 ON events.site_id = sites.id
 WHERE events.ends_at IS NULL OR events.ends_at >= $1
@@ -450,21 +512,21 @@ ORDER BY events.starts_at DESC, events.ends_at DESC
 `
 
 type GetEventsWithinGivenPeriodRow struct {
-	ID         pgtype.UUID
-	CreatedAt  pgtype.Timestamptz
-	UpdatedAt  pgtype.Timestamptz
-	Tag        int32
-	TagText    string
-	StartsAt   pgtype.Timestamptz
-	EndsAt     pgtype.Timestamptz
-	EventCalID pgtype.Text
-	Names      []string
-	PostedAts  []pgtype.Timestamptz
-	PostUrls   []string
-	PostIds    []pgtype.UUID
-	SiteID     pgtype.UUID
-	SiteName   string
-	SiteUrl    string
+	ID          pgtype.UUID
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+	Tag         int32
+	TagText     string
+	StartsAt    pgtype.Timestamptz
+	EndsAt      pgtype.Timestamptz
+	EventCalIds []string
+	Names       []string
+	PostedAts   []pgtype.Timestamptz
+	PostUrls    []string
+	PostIds     []pgtype.UUID
+	SiteID      pgtype.UUID
+	SiteName    string
+	SiteUrl     string
 }
 
 func (q *Queries) GetEventsWithinGivenPeriod(ctx context.Context, endsAt pgtype.Timestamptz) ([]GetEventsWithinGivenPeriodRow, error) {
@@ -484,7 +546,7 @@ func (q *Queries) GetEventsWithinGivenPeriod(ctx context.Context, endsAt pgtype.
 			&i.TagText,
 			&i.StartsAt,
 			&i.EndsAt,
-			&i.EventCalID,
+			&i.EventCalIds,
 			&i.Names,
 			&i.PostedAts,
 			&i.PostUrls,
@@ -504,7 +566,7 @@ func (q *Queries) GetEventsWithinGivenPeriod(ctx context.Context, endsAt pgtype.
 }
 
 const getOldEvents = `-- name: GetOldEvents :many
-SELECT events.id, events.created_at, events.updated_at, events.tag, events.tag_text, events.starts_at, events.ends_at, events.event_cal_id, events.names, events.posted_ats, events.post_urls, events.post_ids, events.site_id, sites.name AS site_name, sites.url AS site_url FROM events
+SELECT events.id, events.created_at, events.updated_at, events.tag, events.tag_text, events.starts_at, events.ends_at, events.event_cal_ids, events.names, events.posted_ats, events.post_urls, events.post_ids, events.site_id, sites.name AS site_name, sites.url AS site_url FROM events
 INNER JOIN sites
 ON events.site_id = sites.id
 WHERE events.ends_at < NOW()
@@ -512,21 +574,21 @@ ORDER BY events.starts_at DESC, events.ends_at DESC
 `
 
 type GetOldEventsRow struct {
-	ID         pgtype.UUID
-	CreatedAt  pgtype.Timestamptz
-	UpdatedAt  pgtype.Timestamptz
-	Tag        int32
-	TagText    string
-	StartsAt   pgtype.Timestamptz
-	EndsAt     pgtype.Timestamptz
-	EventCalID pgtype.Text
-	Names      []string
-	PostedAts  []pgtype.Timestamptz
-	PostUrls   []string
-	PostIds    []pgtype.UUID
-	SiteID     pgtype.UUID
-	SiteName   string
-	SiteUrl    string
+	ID          pgtype.UUID
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+	Tag         int32
+	TagText     string
+	StartsAt    pgtype.Timestamptz
+	EndsAt      pgtype.Timestamptz
+	EventCalIds []string
+	Names       []string
+	PostedAts   []pgtype.Timestamptz
+	PostUrls    []string
+	PostIds     []pgtype.UUID
+	SiteID      pgtype.UUID
+	SiteName    string
+	SiteUrl     string
 }
 
 func (q *Queries) GetOldEvents(ctx context.Context) ([]GetOldEventsRow, error) {
@@ -546,7 +608,7 @@ func (q *Queries) GetOldEvents(ctx context.Context) ([]GetOldEventsRow, error) {
 			&i.TagText,
 			&i.StartsAt,
 			&i.EndsAt,
-			&i.EventCalID,
+			&i.EventCalIds,
 			&i.Names,
 			&i.PostedAts,
 			&i.PostUrls,
@@ -576,20 +638,20 @@ func (q *Queries) ResetEvents(ctx context.Context) error {
 
 const setEventCalID = `-- name: SetEventCalID :exec
 UPDATE events
-SET updated_at = NOW(), event_cal_id = $1
+SET updated_at = NOW(), event_cal_ids = array_append(event_cal_ids, $1::TEXT)
 WHERE tag = $2 AND starts_at = $3 AND ends_at = $4
 `
 
 type SetEventCalIDParams struct {
-	EventCalID pgtype.Text
-	Tag        int32
-	StartsAt   pgtype.Timestamptz
-	EndsAt     pgtype.Timestamptz
+	Column1  string
+	Tag      int32
+	StartsAt pgtype.Timestamptz
+	EndsAt   pgtype.Timestamptz
 }
 
 func (q *Queries) SetEventCalID(ctx context.Context, arg SetEventCalIDParams) error {
 	_, err := q.db.Exec(ctx, setEventCalID,
-		arg.EventCalID,
+		arg.Column1,
 		arg.Tag,
 		arg.StartsAt,
 		arg.EndsAt,
@@ -599,16 +661,32 @@ func (q *Queries) SetEventCalID(ctx context.Context, arg SetEventCalIDParams) er
 
 const setEventCalIDByID = `-- name: SetEventCalIDByID :exec
 UPDATE events
-SET updated_at = NOW(), event_cal_id = $1
+SET updated_at = NOW(), event_cal_ids = array_append(event_cal_ids, $1::TEXT)
 WHERE id = $2
 `
 
 type SetEventCalIDByIDParams struct {
-	EventCalID pgtype.Text
-	ID         pgtype.UUID
+	Column1 string
+	ID      pgtype.UUID
 }
 
 func (q *Queries) SetEventCalIDByID(ctx context.Context, arg SetEventCalIDByIDParams) error {
-	_, err := q.db.Exec(ctx, setEventCalIDByID, arg.EventCalID, arg.ID)
+	_, err := q.db.Exec(ctx, setEventCalIDByID, arg.Column1, arg.ID)
+	return err
+}
+
+const setEventCalIDsByID = `-- name: SetEventCalIDsByID :exec
+UPDATE events
+SET updated_at = NOW(), event_cal_ids = array_cat(event_cal_ids, $1::TEXT[])
+WHERE id = $2
+`
+
+type SetEventCalIDsByIDParams struct {
+	Column1 []string
+	ID      pgtype.UUID
+}
+
+func (q *Queries) SetEventCalIDsByID(ctx context.Context, arg SetEventCalIDsByIDParams) error {
+	_, err := q.db.Exec(ctx, setEventCalIDsByID, arg.Column1, arg.ID)
 	return err
 }

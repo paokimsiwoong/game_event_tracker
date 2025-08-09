@@ -9,19 +9,19 @@ import (
 )
 
 type Event struct {
-	ID         pgtype.UUID
-	CreatedAt  pgtype.Timestamptz
-	UpdatedAt  pgtype.Timestamptz
-	Tag        int32
-	TagText    string
-	StartsAt   pgtype.Timestamptz
-	EndsAt     pgtype.Timestamptz
-	EventCalID pgtype.Text
-	Names      []string
-	PostedAts  []pgtype.Timestamptz
-	PostUrls   []string
-	PostIds    []pgtype.UUID
-	SiteID     pgtype.UUID
+	ID          pgtype.UUID
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+	Tag         int32
+	TagText     string
+	StartsAt    pgtype.Timestamptz
+	EndsAt      pgtype.Timestamptz
+	EventCalIds []string
+	Names       []string
+	PostedAts   []pgtype.Timestamptz
+	PostUrls    []string
+	PostIds     []pgtype.UUID
+	SiteID      pgtype.UUID
 }
 
 type Post struct {

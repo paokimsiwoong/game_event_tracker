@@ -75,6 +75,13 @@ ON posts.site_id = sites.id
 WHERE posts.starts_at <= NOW() AND (posts.ends_at IS NULL OR posts.ends_at >= NOW())
 ORDER BY posts.posted_at DESC, posts.starts_at DESC;
 
+-- name: GetPostsOnGoingAndUpcoming :many
+SELECT posts.*, sites.name AS site_name, sites.url AS site_url FROM posts
+INNER JOIN sites
+ON posts.site_id = sites.id
+WHERE (posts.ends_at IS NULL OR posts.ends_at >= NOW())
+ORDER BY posts.posted_at DESC, posts.starts_at DESC;
+
 -- name: GetPostsWithinGivenPeriod :many
 SELECT posts.*, sites.name AS site_name, sites.url AS site_url FROM posts
 INNER JOIN sites
@@ -90,6 +97,11 @@ WHERE id = $4;
 -- name: SetPostRegisteredTrue :exec
 UPDATE posts
 SET updated_at = NOW(), registered = true
+WHERE id = $1;
+
+-- name: SetPostRegisteredFalse :exec
+UPDATE posts
+SET updated_at = NOW(), registered = false
 WHERE id = $1;
 
 -- name: DeletePostByID :exec
