@@ -8,7 +8,6 @@ import (
 	gocal "google.golang.org/api/calendar/v3"
 	// @@@ google calendar와 내 internal calendar가 이름이 겹침 => 별칭(alias) 사용하기
 
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/paokimsiwoong/game_event_tracker/internal/calendar"
 	"github.com/paokimsiwoong/game_event_tracker/internal/database"
 )
@@ -118,104 +117,16 @@ func addToCalendar(s *State, opt1, opt2 string) error {
 	return nil
 }
 
-type GetEvent struct {
-	ID          pgtype.UUID
-	CreatedAt   pgtype.Timestamptz
-	UpdatedAt   pgtype.Timestamptz
-	Tag         int32
-	TagText     string
-	StartsAt    pgtype.Timestamptz
-	EndsAt      pgtype.Timestamptz
-	EventCalIds []string
-	Names       []string
-	PostedAts   []pgtype.Timestamptz
-	PostUrls    []string
-	PostIds     []pgtype.UUID
-	SiteID      pgtype.UUID
-	SiteName    string
-	SiteUrl     string
-}
-
 // DB에서 반환한 구조는 같지만 이름이 다른 구조체들을 하나의 구조체로 변환해서 반환하는 함수
-func getEvents(s *State, opt1 string) ([]GetEvent, error) {
-	var result []GetEvent
+func getEvents(s *State, opt1 string) ([]database.GetEvent, error) {
 
 	switch opt1 {
 	case "":
-		rows, err := s.PtrDB.GetEventsAndSite(context.Background())
-		if err != nil {
-			return nil, err
-		}
-		for _, row := range rows {
-			result = append(result, GetEvent{
-				ID:          row.ID,
-				CreatedAt:   row.CreatedAt,
-				UpdatedAt:   row.UpdatedAt,
-				Tag:         row.Tag,
-				TagText:     row.TagText,
-				StartsAt:    row.StartsAt,
-				EndsAt:      row.EndsAt,
-				EventCalIds: row.EventCalIds,
-				Names:       row.Names,
-				PostedAts:   row.PostedAts,
-				PostUrls:    row.PostUrls,
-				PostIds:     row.PostIds,
-				SiteID:      row.SiteID,
-				SiteName:    row.SiteName,
-				SiteUrl:     row.SiteUrl,
-			})
-		}
-		return result, nil
+		return s.PtrDB.GetEventsAndSiteManual(context.Background())
 	case "ongoing":
-		rows, err := s.PtrDB.GetEventsOnGoing(context.Background())
-		if err != nil {
-			return nil, err
-		}
-		for _, row := range rows {
-			result = append(result, GetEvent{
-				ID:          row.ID,
-				CreatedAt:   row.CreatedAt,
-				UpdatedAt:   row.UpdatedAt,
-				Tag:         row.Tag,
-				TagText:     row.TagText,
-				StartsAt:    row.StartsAt,
-				EndsAt:      row.EndsAt,
-				EventCalIds: row.EventCalIds,
-				Names:       row.Names,
-				PostedAts:   row.PostedAts,
-				PostUrls:    row.PostUrls,
-				PostIds:     row.PostIds,
-				SiteID:      row.SiteID,
-				SiteName:    row.SiteName,
-				SiteUrl:     row.SiteUrl,
-			})
-		}
-		return result, nil
+		return s.PtrDB.GetEventsOnGoingManual(context.Background())
 	case "upcoming":
-		rows, err := s.PtrDB.GetEventsOnGoingAndUpcoming(context.Background())
-		if err != nil {
-			return nil, err
-		}
-		for _, row := range rows {
-			result = append(result, GetEvent{
-				ID:          row.ID,
-				CreatedAt:   row.CreatedAt,
-				UpdatedAt:   row.UpdatedAt,
-				Tag:         row.Tag,
-				TagText:     row.TagText,
-				StartsAt:    row.StartsAt,
-				EndsAt:      row.EndsAt,
-				EventCalIds: row.EventCalIds,
-				Names:       row.Names,
-				PostedAts:   row.PostedAts,
-				PostUrls:    row.PostUrls,
-				PostIds:     row.PostIds,
-				SiteID:      row.SiteID,
-				SiteName:    row.SiteName,
-				SiteUrl:     row.SiteUrl,
-			})
-		}
-		return result, nil
+		return s.PtrDB.GetEventsOnGoingAndUpcomingManual(context.Background())
 	default:
 		return nil, errors.New("error invalid opt1")
 	}

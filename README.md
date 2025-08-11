@@ -38,6 +38,5 @@ game-event-calendar/
 └── README.md
 ```
 
-TODO: 이벤트 일정 시작일 종료일 입력하는 대신, 이벤트 시작일 1개, 중간에 1개, 종료일(또는 전날) 1개 추가하는 등 리마인드 방식으로 등록하는 것도 가능하게 하기
 TODO: https://sv-news.pokemon.co.jp/ko/page/373.html, https://sv-news.pokemon.co.jp/ko/page/370.html 과 같이 한 게시글에 테라레이드 기간과 이후의 이상한 소포 선물 기간이 같이 있는 경우 이상한 소포 선물 기간의 tag와 tag text가 1, 테라 레이드배틀이 되는 문제 해결?
 TODO: 에픽게임즈 스토어 무료게임 공지
