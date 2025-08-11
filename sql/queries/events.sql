@@ -31,7 +31,7 @@ SELECT * FROM events
 ORDER BY created_at;
 
 -- name: GetEventsAndSite :many
-SELECT events.*, sites.name AS site_name, sites.url AS site_url FROM events
+SELECT events.id, events.created_at, events.updated_at, events.tag, events.tag_text, events.starts_at, events.ends_at, events.event_cal_ids, events.names, events.posted_ats, events.post_urls, events.post_ids, events.site_id, sites.name AS site_name, sites.url AS site_url FROM events
 INNER JOIN sites
 ON events.site_id = sites.id
 ORDER BY events.starts_at DESC, events.ends_at DESC;
@@ -52,28 +52,28 @@ WHERE site_id = $1
 ORDER BY created_at;
 
 -- name: GetEventsOnGoing :many
-SELECT events.*, sites.name AS site_name, sites.url AS site_url FROM events
+SELECT events.id, events.created_at, events.updated_at, events.tag, events.tag_text, events.starts_at, events.ends_at, events.event_cal_ids, events.names, events.posted_ats, events.post_urls, events.post_ids, events.site_id, sites.name AS site_name, sites.url AS site_url FROM events
 INNER JOIN sites
 ON events.site_id = sites.id
 WHERE events.starts_at <= NOW() AND (events.ends_at IS NULL OR events.ends_at >= NOW())
 ORDER BY events.starts_at DESC, events.ends_at DESC;
 
 -- name: GetEventsOnGoingAndUpcoming :many
-SELECT events.*, sites.name AS site_name, sites.url AS site_url FROM events
+SELECT events.id, events.created_at, events.updated_at, events.tag, events.tag_text, events.starts_at, events.ends_at, events.event_cal_ids, events.names, events.posted_ats, events.post_urls, events.post_ids, events.site_id, sites.name AS site_name, sites.url AS site_url FROM events
 INNER JOIN sites
 ON events.site_id = sites.id
 WHERE (events.ends_at IS NULL OR events.ends_at >= NOW())
 ORDER BY events.starts_at DESC, events.ends_at DESC;
 
 -- name: GetEventsWithinGivenPeriod :many
-SELECT events.*, sites.name AS site_name, sites.url AS site_url FROM events
+SELECT events.id, events.created_at, events.updated_at, events.tag, events.tag_text, events.starts_at, events.ends_at, events.event_cal_ids, events.names, events.posted_ats, events.post_urls, events.post_ids, events.site_id, sites.name AS site_name, sites.url AS site_url FROM events
 INNER JOIN sites
 ON events.site_id = sites.id
 WHERE events.ends_at IS NULL OR events.ends_at >= $1
 ORDER BY events.starts_at DESC, events.ends_at DESC;
 
 -- name: GetOldEvents :many
-SELECT events.*, sites.name AS site_name, sites.url AS site_url FROM events
+SELECT events.id, events.created_at, events.updated_at, events.tag, events.tag_text, events.starts_at, events.ends_at, events.event_cal_ids, events.names, events.posted_ats, events.post_urls, events.post_ids, events.site_id, sites.name AS site_name, sites.url AS site_url FROM events
 INNER JOIN sites
 ON events.site_id = sites.id
 WHERE events.ends_at < NOW()
