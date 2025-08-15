@@ -61,10 +61,10 @@ curl -sS https://webi.sh/golang | sh
 ```
 
 <details>
-<summary> <h3> 2. Postgres v15 설치 및 설정 </h3> </summary>
+<summary> <h3> 2. Postgres v15 또는 이후 버전 설치 및 설정 </h3> </summary>
 <div markdown="1">
 
-#### 2-1. 설치(리눅스 Ubuntu 기준)
+#### 2-1. Postgres 설치(리눅스 Ubuntu 기준)
 ```bash
 sudo apt update
 sudo apt install postgresql postgresql-contrib
@@ -134,7 +134,7 @@ goose postgres <connection_string> up
 <summary> <h3> 5. Google Cloud에서 새 프로젝트 생성하기 </h3> </summary>
 <div markdown="1">
 
-#### 5-1. 웹 브라우저에서 Google Cloud Console(https://console.cloud.google.com) 접속
+#### 5-1. 웹 브라우저에서 [Google Cloud Console](https://console.cloud.google.com) 접속
 * #### Google 계정 필요
 
 #### 5-2. 프로젝트 선택 도구로 새 프로젝트 생성 페이지 들어가기
@@ -159,6 +159,10 @@ goose postgres <connection_string> up
     * #### json 파일의 이름은 `client_secret_<client id>.apps.googleusercontent.com.json`와 같은 형태로 되어 있고, 원하는 이름으로 변경해도 문제 없음
 
 #### 5-6. Google 인증 플랫폼 테스트 사용자 설정
+* #### [Google 인증 플랫폼](https://console.cloud.google.com/auth/) 페이지에서 대상 하위 메뉴 선택
+* #### 표시된 페이지에서 테스트 사용자 섹션 밑의 + Add users 버튼을 클릭하고 구글 캘린더에 일정을 추가하려고 하는 구글 계정을 입력
+    * ####  프로젝트 프로그램을 최초 실행할 때, 로컬에 액세스 토큰을 저장하는 과정에 미리 정해진 주소에 접속해(인증 정보 생성 시 애플리케이션 유형을 데스크톱 앱으로 하면 `http://localhost`) 프로그램에서 사용하는 구글 API 기능 권한을 승인하는 과정이 이루어지는 데, 그 때 테스트 사용자에 등록하지 않은 구글 계정은 권한 승인이 불가능
+        * #### Google Cloud Console 사용자 인증 정보 json을 확인하면 installed 키 안에 redirect_uris 필드에 저장된 `"http://localhost"`를 확인할 수 있다.
 
 </div>
 </details>
@@ -169,17 +173,14 @@ goose postgres <connection_string> up
 ```bash
 # db connection string
 DB_URL="postgres://<username>:<password>@localhost:5432/<dbname>?sslmode=disable"
-# 일정을 업로드할 캘린더 id (기본값 primary를 쓰면 로그인한 사용자 기본 캘린더에 일정이 업로드)
+# 일정을 업로드할 캘린더 id (기본값 primary를 쓰면 로그인한 사용자의 기본 캘린더에 일정이 업로드)
 CALENDAR_ID = "primary"
 # 5. 에서 생성한 Google Cloud Console 사용자 인증 정보 json 파일 위치
 CLIENT_SECRET_FILE_PATH="OAuth 2.0 클라이언트 인증 정보 json 절대경로"
 # OAuth 2.0 인증 과정에서 생성되고 사용될 액세스 토큰 저장 위치
 TOKEN_FILE_PATH="로컬 OAuth 2.0 액세스 토큰 절대경로"
 ```
-* #### 
 
-
-### 추가. sqlc 설정 및 사용
 
 </div>
 </details>
