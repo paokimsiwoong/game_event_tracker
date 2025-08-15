@@ -2,6 +2,7 @@ package crawler
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,6 +11,16 @@ import (
 	"sync"
 	"time"
 )
+
+func Crawl(opt, url string, duration int) ([]PokeSVResult, error) {
+	switch opt {
+	case "pokesv":
+		return PokeCrawl(url, duration)
+	// case "epic": epic 스토어 추가하기
+	default:
+		return nil, errors.New("crawl function for provided opt not yet implemented")
+	}
+}
 
 type PokeSVJSON struct {
 	Hash string `json:"hash"`

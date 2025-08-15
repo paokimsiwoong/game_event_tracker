@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -9,6 +10,16 @@ import (
 
 	"github.com/paokimsiwoong/game_event_tracker/internal/crawler"
 )
+
+func Parse(opt string, input []crawler.PokeSVResult) ([]PokeSVParsedResult, error) {
+	switch opt {
+	case "pokesv":
+		return PokeParse(input)
+	// case "epic":
+	default:
+		return nil, errors.New("parse function for provided opt not yet implemented")
+	}
+}
 
 type PokeSVParsedResult struct {
 	Title string

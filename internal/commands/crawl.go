@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"slices"
 	"strconv"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -18,40 +17,25 @@ import (
 // // @@@ ==> calendar 등록시 걸러내는 방식 vs 여기서 걸러내는 방식?
 func HandlerCrawl(s *State, cmd Command) error {
 	// args의 길이가 2이 아니면 crawl <n, name, u, url> <n이면 이름, u면 url> 형태가 아니므로 에러
-	if len(cmd.Args) != 3 {
-		return errors.New("the crawl handler expects three arguments, keyword type(one of n, name, u, url), keyword value, and crawl duration in days")
-	}
-	// cmd.Args[0] 확인
-	allowed := []string{"n", "name", "u", "url"}
-	if !slices.Contains(allowed, cmd.Args[0]) {
-		return errors.New("the crawl handler expects three arguments, keyword type(one of n, name, u, url), keyword value, and crawl duration in days")
+	if len(cmd.Args) != 2 {
+		return errors.New("the crawl handler expects two arguments, crawl site name and crawl duration in days")
 	}
 
-	var site database.Site
-	var err error
-
-	if cmd.Args[0][0] == 'n' {
-		site, err = s.PtrDB.GetSiteByName(context.Background(), cmd.Args[1])
-		if err != nil {
-			return fmt.Errorf("error crawling site: site with the provided name not found: %w", err)
-		}
-	} else {
-		site, err = s.PtrDB.GetSiteByURL(context.Background(), cmd.Args[1])
-		if err != nil {
-			return fmt.Errorf("error crawling site: site with the provided url not found: %w", err)
-		}
+	site, err := s.PtrDB.GetSiteByName(context.Background(), cmd.Args[0])
+	if err != nil {
+		return fmt.Errorf("error crawling site: site with the provided name not found: %w", err)
 	}
 
 	// @@@ 현재는 포켓몬 스/바 이벤트 일정 crawl, parse 함수 밖에 없음
-	duration, err := strconv.Atoi(cmd.Args[2])
+	duration, err := strconv.Atoi(cmd.Args[1])
 	if err != nil {
 		return fmt.Errorf("error crawling site: invalid crawl duration: %w", err)
 	}
-	crawled, err := crawler.PokeCrawl(site.Url, duration)
+	crawled, err := crawler.Crawl(cmd.Args[0], site.Url, duration)
 	if err != nil {
 		return fmt.Errorf("error crawling site: failed to crawl: %w", err)
 	}
-	parsed, err := parser.PokeParse(crawled)
+	parsed, err := parser.Parse(cmd.Args[0], crawled)
 	if err != nil {
 		return fmt.Errorf("error crawling site: failed to parse: %w", err)
 	}

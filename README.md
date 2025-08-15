@@ -1,8 +1,14 @@
 # game_event_tracker
-
+---
+---
 ## 게임 이벤트 일정 캘린더 입력 프로젝트
 ---
 ### 유저가 게임 이벤트 공지를 제공하는 url (ex:https://sv-news.pokemon.co.jp/ko/list => https://sv-news.pokemon.co.jp/ko/json/list.json) 을 입력하면 그 내용들을 긁어와서 일정이 적혀 있는 이벤트들을 구글 캘린더에 저장합니다.
+---
+---
+<details>
+<summary> <h2> 프로젝트 구조 </h2> </summary>
+<div markdown="1">
 
 ```
 game-event-calendar/
@@ -37,6 +43,149 @@ game-event-calendar/
 ├── .env
 └── README.md
 ```
+---
+### 세부 설명
+
+</div>
+</details>
+
+---
+---
+<details>
+<summary> <h2> 프로젝트 사용법 </h2> </summary>
+<div markdown="1">
+
+### 1. go v1.24 또는 그 이후 버전 설치
+```bash
+curl -sS https://webi.sh/golang | sh
+```
+
+<details>
+<summary> <h3> 2. Postgres v15 설치 및 설정 </h3> </summary>
+<div markdown="1">
+
+#### 2-1. 설치(리눅스 Ubuntu 기준)
+```bash
+sudo apt update
+sudo apt install postgresql postgresql-contrib
+```
+* #### 설치가 완료되면 자동으로 운영체제(리눅스) 레벨의 `postgres`라는 유저 계정이 생성
+
+#### 2-2. postgres 계정 비밀 번호 설정하기
+```bash
+sudo passwd postgres
+```
+* #### 입력 시 비밀번호를 2번 입력하는 프롬프트가 생성되고, 입력한 비밀번호가 `postgres` 계정 로그인 비밀번호로 설정
+
+#### 2-3. Postgres server 백그라운드 실행
+```bash
+sudo service postgresql start
+```
+#### 2-4. psql 쉘 사용하기
+```bash
+sudo -u postgres psql
+```
+* #### 명령어 입력하면 psql shell 이 새 prompt (`postgres=#`)를 표시
+
+#### 2-5. 새 데이터베이스 생성
+```bash
+# psql shell(postgres=#)에 입력하기
+CREATE DATABASE <db_name>;
+# ex: CREATE DATABASE tracker;
+```
+#### 2-6. 데이터베이스 내 사용자 비밀번호 설정
+```bash
+# psql shell(postgres=#)에 입력하기
+# 생성한 데이터베이스에 연결
+\c <db_name>
+# <db_name>=# 형태의 새 프롬프트 표시
+
+# 데이터베이스에 연결된 상태에서(<db_name>=#)
+# DB 내 사용자 postgres 비밀번호 설정
+ALTER USER postgres PASSWORD '<your_password>';
+``` 
+* #### 여기서 설정한 비밀번호가 뒤에 나올 `connection string`에 들어가는 비밀번호
+* #### `sudo passwd postgres`로 위에서 설정한 리눅스 OS상 postgres 유저의 비밀번호와 별개
+
+</div>
+</details>
+
+### 3. 프로젝트 로컬 다운로드
+```bash
+git clone https://github.com/paokimsiwoong/game_event_tracker
+```
+
+### 4. goose 설치 및 up migration 실행
+#### 4-1. goose 설치
+```bash
+go install github.com/pressly/goose/v3/cmd/goose@latest
+```
+#### 4-2. up migration 실행
+```bash
+# 프로젝트의 sql/schema directory 경로에서 아래 명령어를 실행
+goose postgres <connection_string> up
+```
+* #### `connection string`은 `"postgres://postgres:<database user's password>@localhost:5432/<database name>"`의 형태. 
+    * #### 위에서 `ALTER USER postgres PASSWORD '<your_password>';`로 설정한 비밀번호 입력
+    * #### (postgres 기본 포트는 `5432`)
+* #### up migration을 실행하고 나면 프로젝트에 필요한 데이터 테이블들이 데이터베이스 내부에 생성
+
+<details>
+<summary> <h3> 5. Google Cloud에서 새 프로젝트 생성하기 </h3> </summary>
+<div markdown="1">
+
+#### 5-1. 웹 브라우저에서 Google Cloud Console(https://console.cloud.google.com) 접속
+* #### Google 계정 필요
+
+#### 5-2. 프로젝트 선택 도구로 새 프로젝트 생성 페이지 들어가기
+* #### Google Cloud Console페이지 상단 왼쪽의 Google Cloud 로고 오른쪽에 있는 프로젝트 선택 도구 클릭
+* #### 새 프로젝트 버튼 클릭
+
+#### 5-3. 프로젝트 정보 입력
+* #### 프로젝트 이름, 위치는 자유롭게 입력 가능
+* #### 입력 완료 후 만들기 버튼 클릭
+
+#### 5-4. 해당 프로젝트 선택하기
+* #### Google Cloud 로고 오른쪽의 프로젝트 선택 도구 부분에 생성한 프로젝트가 선택되어 있는지 확인하기
+* #### 선택되어 있지 않으면 선택 도구를 클릭해 프로젝트를 찾고 선택하기
+
+#### 5-5. 사용자 인증 정보 만들기
+* #### Google Cloud 로고 왼쪽의 탐색 메뉴(가로줄 3개 모양)을 선택하고 제품 탭 밑의 API 및 서비스 페이지 클릭
+* #### API 및 서비스 페이지 왼쪽에 보이는 하위 메뉴에서 사용자 인증 정보 클릭
+* #### 표시된 페이지에서 + 사용자 인증 정보 만들기 버튼을 찾아 클릭하고 표시된 선택지 중 OAuth 클라이언트 ID 선택
+* #### 애플리케이션 유형은 데스크톱 앱으로 설정하고 이름 설정 뒤 만들기 버튼 클릭
+    * #### ***생성 완료 후 표시되는 정보(`client id, client 보안 비밀번호`)는 다시 볼 수 없으므로 정보들을 따로 안전한 곳에 메모해두고, 반드시 json 파일을 다운로드하기***
+* #### 다운로드한 json 파일을 프로젝트 폴더 내부에 저장
+    * #### json 파일의 이름은 `client_secret_<client id>.apps.googleusercontent.com.json`와 같은 형태로 되어 있고, 원하는 이름으로 변경해도 문제 없음
+
+#### 5-6. Google 인증 플랫폼 테스트 사용자 설정
+
+</div>
+</details>
+
+### 6. .env 파일 설정
+#### 6-1. 프로젝트 폴더 루트 경로(.env_example이 존재하는 경로)에 .env 파일 생성
+#### 6-2. .env_example 을 참고하며 .env 내용 작성
+```bash
+# db connection string
+DB_URL="postgres://<username>:<password>@localhost:5432/<dbname>?sslmode=disable"
+# 일정을 업로드할 캘린더 id (기본값 primary를 쓰면 로그인한 사용자 기본 캘린더에 일정이 업로드)
+CALENDAR_ID = "primary"
+# 5. 에서 생성한 Google Cloud Console 사용자 인증 정보 json 파일 위치
+CLIENT_SECRET_FILE_PATH="OAuth 2.0 클라이언트 인증 정보 json 절대경로"
+# OAuth 2.0 인증 과정에서 생성되고 사용될 액세스 토큰 저장 위치
+TOKEN_FILE_PATH="로컬 OAuth 2.0 액세스 토큰 절대경로"
+```
+* #### 
+
+
+### 추가. sqlc 설정 및 사용
+
+</div>
+</details>
+
+---
+---
 
 TODO: https://sv-news.pokemon.co.jp/ko/page/373.html, https://sv-news.pokemon.co.jp/ko/page/370.html 과 같이 한 게시글에 테라레이드 기간과 이후의 이상한 소포 선물 기간이 같이 있는 경우 이상한 소포 선물 기간의 tag와 tag text가 1, 테라 레이드배틀이 되는 문제 해결?
 TODO: 에픽게임즈 스토어 무료게임 공지

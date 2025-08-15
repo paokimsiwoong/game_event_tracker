@@ -58,6 +58,16 @@ func HandlerDelete(s *State, cmd Command) error {
 
 	// 첫번째 추가 명령어가 post이면
 	case "post":
+		if len(cmd.Args) == 1 {
+			// all 없이 post로 끝나도 전체 삭제
+			err := s.PtrDB.ResetPosts(context.Background())
+			if err != nil {
+				return fmt.Errorf("error deleting all posts: %w", err)
+			}
+			fmt.Println("All posts have been deleted")
+
+			return nil
+		}
 		if len(cmd.Args) == 2 {
 			switch cmd.Args[1] {
 			// DeleteOldPosts

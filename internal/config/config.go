@@ -12,7 +12,6 @@ type Config struct {
 	DBURL string
 	// 일정을 저장할 구글 캘린더의 아이디
 	CalendarID           string
-	Platform             string
 	ClientSecretFilePath string
 	TokFilePath          string
 }
@@ -32,7 +31,6 @@ func Read() (Config, error) {
 		// 설정하지 않으면 기본값은 primary
 		calendarID = "primary"
 	}
-	platform := os.Getenv("PLATFORM")
 
 	// OAuth 2.0 관련 파일 경로
 	clientSecretFilePath := os.Getenv("CLIENT_SECRET_FILE_PATH")
@@ -41,7 +39,6 @@ func Read() (Config, error) {
 	config := Config{
 		DBURL:                dbURL,
 		CalendarID:           calendarID,
-		Platform:             platform,
 		ClientSecretFilePath: clientSecretFilePath,
 		TokFilePath:          tokFilePath,
 	}
