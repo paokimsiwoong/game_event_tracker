@@ -16,7 +16,7 @@ import (
 // @@@ TODO: 동일 이벤트가 여러번 공지되는 경우 events table에 여러번 등록되는 문제
 // // @@@ ==> calendar 등록시 걸러내는 방식 vs 여기서 걸러내는 방식?
 func HandlerCrawl(s *State, cmd Command) error {
-	// args의 길이가 2이 아니면 crawl <n, name, u, url> <n이면 이름, u면 url> 형태가 아니므로 에러
+	// args의 길이가 2이 아니면 crawl <site name> <duration> 형태가 아니므로 에러
 	if len(cmd.Args) != 2 {
 		return errors.New("the crawl handler expects two arguments, crawl site name and crawl duration in days")
 	}
