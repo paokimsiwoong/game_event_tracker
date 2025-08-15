@@ -5,3 +5,4 @@ tester2.go
 client_secret*
 client_secret.json
 token.json
+sqlc.yaml

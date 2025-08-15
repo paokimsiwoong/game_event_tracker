@@ -52,7 +52,7 @@ game-event-calendar/
 ---
 ---
 <details>
-<summary> <h2> 프로젝트 사용법 </h2> </summary>
+<summary> <h2> 프로젝트 설치 </h2> </summary>
 <div markdown="1">
 
 ### 1. go v1.24 또는 그 이후 버전 설치
@@ -161,8 +161,7 @@ goose postgres <connection_string> up
 #### 5-6. Google 인증 플랫폼 테스트 사용자 설정
 * #### [Google 인증 플랫폼](https://console.cloud.google.com/auth/) 페이지에서 대상 하위 메뉴 선택
 * #### 표시된 페이지에서 테스트 사용자 섹션 밑의 + Add users 버튼을 클릭하고 구글 캘린더에 일정을 추가하려고 하는 구글 계정을 입력
-    * ####  프로젝트 프로그램을 최초 실행할 때, 로컬에 액세스 토큰을 저장하는 과정에 미리 정해진 주소에 접속해(인증 정보 생성 시 애플리케이션 유형을 데스크톱 앱으로 하면 `http://localhost`) 프로그램에서 사용하는 구글 API 기능 권한을 승인하는 과정이 이루어지는 데, 그 때 테스트 사용자에 등록하지 않은 구글 계정은 권한 승인이 불가능
-        * #### Google Cloud Console 사용자 인증 정보 json을 확인하면 installed 키 안에 redirect_uris 필드에 저장된 `"http://localhost"`를 확인할 수 있다.
+    * ####  프로젝트 프로그램을 최초 실행할 때, 로컬에 액세스 토큰을 저장하는 과정에 프로그램이 출력한 주소에 접속해 프로그램에서 사용하는 구글 API 기능 권한을 승인하는 과정이 이루어지는 데, 그 때 테스트 사용자에 등록하지 않은 구글 계정은 권한 승인이 불가능
 
 </div>
 </details>
@@ -181,6 +180,19 @@ CLIENT_SECRET_FILE_PATH="OAuth 2.0 클라이언트 인증 정보 json 절대경�
 TOKEN_FILE_PATH="로컬 OAuth 2.0 액세스 토큰 절대경로"
 ```
 
+### 7. 로컬 액세스 토큰 생성
+#### 7-1. 프로그램 최초 실행
+```bash
+# 프로젝트 루트 폴더에서 실행
+go run ./cmd sites
+```
+* #### 실행하면 `브라우저에서 URL을 열고 인증코드를 입력하세요:`과 `https://accounts.google.com/o/oauth2/auth?access_type=offline&client_id=.....` 형태의 url이 출력되고 사용자의 인증코드 입력을 기다린다
+#### 7-2. 표시된 url에 접속
+* #### 출력된 url에 웹 브라우저 등을 이용해 접속하면 구글 계정에 로그인하는 페이지가 표시된다. 여기서 5-6에서 등록한 테스트 사용자 구글 계정으로 로그인한다.
+* #### 로그인하면 연결되는 새 페이지의 링크에 포함된 인증 코드를 찾아 복사해 사용자 입력을 기다리는 터미널에 입력한다.   
+    * #### 링크는 `http://localhost/?state=state-token&code={인증코드}&scope=https://www.googleapis.com/auth/calendar`의 형태로 `code=` 뒤에 나타나는 인증코드를 복사한다.
+        * #### 로그인 시 연결되는 `http://localhost`는 Google Cloud Console 사용자 인증 정보 json 파일의 installed 키 안에 redirect_uris 필드에 저장된 값을 따른다.
+
 
 </div>
 </details>
@@ -188,5 +200,18 @@ TOKEN_FILE_PATH="로컬 OAuth 2.0 액세스 토큰 절대경로"
 ---
 ---
 
+<details>
+<summary> <h2> 프로젝트 사용법 </h2> </summary>
+<div markdown="1">
+
+
+</div>
+</details>
+
+---
+---
+
+
 TODO: https://sv-news.pokemon.co.jp/ko/page/373.html, https://sv-news.pokemon.co.jp/ko/page/370.html 과 같이 한 게시글에 테라레이드 기간과 이후의 이상한 소포 선물 기간이 같이 있는 경우 이상한 소포 선물 기간의 tag와 tag text가 1, 테라 레이드배틀이 되는 문제 해결?
 TODO: 에픽게임즈 스토어 무료게임 공지
+TODO: HELP 명령어 추가
