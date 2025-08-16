@@ -1,11 +1,7 @@
 # game_event_tracker
----
----
 ## 게임 이벤트 일정 캘린더 입력 프로젝트
----
 ### 유저가 게임 이벤트 공지를 제공하는 url (ex:https://sv-news.pokemon.co.jp/ko/list => https://sv-news.pokemon.co.jp/ko/json/list.json) 을 입력하면 그 내용들을 긁어와서 일정이 적혀 있는 이벤트들을 구글 캘린더에 저장합니다.
----
----
+
 <details>
 <summary> <h2> 프로젝트 구조 </h2> </summary>
 <div markdown="1">
@@ -36,21 +32,20 @@ game-event-calendar/
 │   │   ├── sites.sql.go
 │   │   ├── posts.sql.go
 │   │   └── evetns.sql.go
-│   └── config/            // 설정(토큰, URL 등)
+│   └── config/            // 설정(토큰, URL 등) 관리
 │       └── config.go
 ├── go.mod
-├── sqlc.yaml
-├── .env
+├── go.sum
+├── .gitignore
+├── .env                   // 필요 설정 값 저장
+├── .env_example
 └── README.md
 ```
----
-### 세부 설명
 
 </div>
 </details>
 
----
----
+
 <details>
 <summary> <h2> 프로젝트 설치 </h2> </summary>
 <div markdown="1">
@@ -197,8 +192,6 @@ go run ./cmd sites
 </div>
 </details>
 
----
----
 
 <details>
 <summary> <h2> 프로젝트 사용법 </h2> </summary>
@@ -217,35 +210,56 @@ go build -o <app_name>
 
 ### 명령어
 #### `sites`
-* #### 
+* #### `sites` 테이블에 저장된 크롤 가능한 사이트 리스트. `Name`에 표시된 값을 `crawl` 명령어에 사용
 #### `crawl <site name> <duration>`
-* #### 
-#### `posts <argument>`
-* #### `posts`
-* #### `posts ongoing`
-* #### `posts period <duration>`
-#### `events`
-* ####
-#### `calendar`
-* #### `calendar <argument>`
+* #### 주어진 기간 내에 게시된 이벤트 공지 글을 받아 `posts` 테이블에 데이터를 저장
+#### `posts`
+* #### 저장된 이벤트 게시글 전부를 리스트로 출력
+* #### 가능한 옵션
     * #### `ongoing`
+        * #### 진행중인 이벤트의 게시글만 리스트로 출력
+    * #### `period <duration>`
+        * #### 주어진 기간 내에 게시된 게시글만 리스트로 출력
+#### `events`
+* ####  이벤트의 종류, 진행 기간 등을 담은 `events` 테이블의 데이터들을 리스트로 출력
+    * #### `posts`는 동일한 이벤트에 대한 공지를 여러번 게시한 경우 그 중복 공지들이 전부 표시되지만, `events`는 중복 게시된 이벤트여도 한번만 표시
+#### `calendar`
+* #### `events` 테이블에 저장된 이벤트들을 구글 캘린더에 입력
+* #### 가능한 옵션
+    * #### `ongoing`
+        * #### 진행 중인 이벤트만 입력
     * #### `upcoming`
+        * #### 진행 중이거나 진행 예정인 이벤트만 입력
     * #### `wr`
+        * #### 시작, 중간, 종료 리마인드를 추가 (기본값)
     * #### `nr`
+        * #### 시작, 중간, 종료 리마인드를 미추가
     * #### `or`
-* #### `calendar <argument1> <argument2>`
-    * #### 
+        * #### 시작, 중간, 종료 리마인드만 구글 캘린더에 입력
 #### `delete`
-* ####
-#### `addsite`
-* ####
+* #### db의 데이터를 지우는 명령어
+* #### 가능한 옵션
+    * #### `site`
+        * #### `sites` 테이블에 저장된 데이터를 삭제. `post`나 `event`와 다르게 전체 삭제 기능 없음
+        * #### 가능한 옵션
+            * #### `name 사이트_이름` 또는 `n 사이트_이름`
+                * #### 이름으로 지정된 사이트 삭제
+            * #### `url 사이트_이름` 또는 `u 사이트_이름`
+                * #### url로 지정된 사이트 삭제
+    * #### `post`
+        * #### `posts` 테이블에 저장된 데이터를 삭제
+        * #### 가능한 옵션
+            * #### `old`
+                * #### 종료된 이벤트에 관련한 게시글들만 삭제
+    * #### `event`
+        * #### `events` 테이블에 저장된 데이터를 지우고, 해당 데이터가 구글 캘린더에 입력되어 있을 경우 그 구글 캘린더 일정도 삭제
+#### `addsite <siteName> <siteURL>`
+* #### `sites` 테이블에 데이터를 추가하는 명령어
+* #### `addsite`로 추가한 뒤, `internal/crawler/crawler.go`에 해당 사이트 크롤링 함수를 추가해야 `crawl` 명령어에서 추가한 사이트로 크롤링 가능
 
 
 </div>
 </details>
-
----
----
 
 
 TODO: https://sv-news.pokemon.co.jp/ko/page/373.html, https://sv-news.pokemon.co.jp/ko/page/370.html 과 같이 한 게시글에 테라레이드 기간과 이후의 이상한 소포 선물 기간이 같이 있는 경우 이상한 소포 선물 기간의 tag와 tag text가 1, 테라 레이드배틀이 되는 문제 해결?
