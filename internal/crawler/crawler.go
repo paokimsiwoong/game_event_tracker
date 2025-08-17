@@ -12,14 +12,22 @@ import (
 	"time"
 )
 
-func Crawl(opt, url string, duration int) ([]PokeSVResult, error) {
+func Crawl(opt, url string, duration int) (Result, error) {
 	switch opt {
 	case "pokesv":
-		return PokeCrawl(url, duration)
-	// case "epic": epic 스토어 추가하기
+		pokeResult, err := PokeCrawl(url, duration)
+		return Result{PokeResult: pokeResult}, err
+	case "epic":
+		epicResult, err := EpicCrawl(url)
+		return Result{EpicResult: epicResult}, err
 	default:
-		return nil, errors.New("crawl function for provided opt not yet implemented")
+		return Result{}, errors.New("crawl function for provided opt not yet implemented")
 	}
+}
+
+type Result struct {
+	PokeResult []PokeSVResult
+	EpicResult []EpicResult
 }
 
 type PokeSVJSON struct {
@@ -211,4 +219,150 @@ func fetchURL(client *http.Client, url string, ch chan<- PokeSVResult, wg *sync.
 		Url:     url,
 		Success: true,
 	}
+}
+
+type EpicJSON struct {
+	Data struct {
+		Catalog struct {
+			SearchStore struct {
+				Elements []struct {
+					Title                string    `json:"title"`
+					ID                   string    `json:"id"`
+					Namespace            string    `json:"namespace"`
+					Description          string    `json:"description"`
+					EffectiveDate        time.Time `json:"effectiveDate"`
+					OfferType            string    `json:"offerType"`
+					ExpiryDate           any       `json:"expiryDate"`
+					ViewableDate         time.Time `json:"viewableDate"`
+					Status               string    `json:"status"`
+					IsCodeRedemptionOnly bool      `json:"isCodeRedemptionOnly"`
+					KeyImages            []struct {
+						Type string `json:"type"`
+						URL  string `json:"url"`
+					} `json:"keyImages"`
+					Seller struct {
+						ID   string `json:"id"`
+						Name string `json:"name"`
+					} `json:"seller"`
+					ProductSlug string `json:"productSlug"`
+					URLSlug     string `json:"urlSlug"`
+					URL         any    `json:"url"`
+					Items       []struct {
+						ID        string `json:"id"`
+						Namespace string `json:"namespace"`
+					} `json:"items"`
+					CustomAttributes []struct {
+						Key   string `json:"key"`
+						Value string `json:"value"`
+					} `json:"customAttributes"`
+					Categories []struct {
+						Path string `json:"path"`
+					} `json:"categories"`
+					Tags []struct {
+						ID string `json:"id"`
+					} `json:"tags"`
+					CatalogNs struct {
+						Mappings []struct {
+							PageSlug string `json:"pageSlug"`
+							PageType string `json:"pageType"`
+						} `json:"mappings"`
+					} `json:"catalogNs"`
+					OfferMappings []struct {
+						PageSlug string `json:"pageSlug"`
+						PageType string `json:"pageType"`
+					} `json:"offerMappings"`
+					Price struct {
+						TotalPrice struct {
+							DiscountPrice   int    `json:"discountPrice"`
+							OriginalPrice   int    `json:"originalPrice"`
+							VoucherDiscount int    `json:"voucherDiscount"`
+							Discount        int    `json:"discount"`
+							CurrencyCode    string `json:"currencyCode"`
+							CurrencyInfo    struct {
+								Decimals int `json:"decimals"`
+							} `json:"currencyInfo"`
+							FmtPrice struct {
+								OriginalPrice     string `json:"originalPrice"`
+								DiscountPrice     string `json:"discountPrice"`
+								IntermediatePrice string `json:"intermediatePrice"`
+							} `json:"fmtPrice"`
+						} `json:"totalPrice"`
+						LineOffers []struct {
+							AppliedRules []struct {
+								ID              string    `json:"id"`
+								EndDate         time.Time `json:"endDate"`
+								DiscountSetting struct {
+									DiscountType string `json:"discountType"`
+								} `json:"discountSetting"`
+							} `json:"appliedRules"`
+						} `json:"lineOffers"`
+					} `json:"price"`
+					Promotions struct {
+						PromotionalOffers []struct {
+							PromotionalOffers []struct {
+								StartDate       time.Time `json:"startDate"`
+								EndDate         time.Time `json:"endDate"`
+								DiscountSetting struct {
+									DiscountType       string `json:"discountType"`
+									DiscountPercentage int    `json:"discountPercentage"`
+								} `json:"discountSetting"`
+							} `json:"promotionalOffers"`
+						} `json:"promotionalOffers"`
+						UpcomingPromotionalOffers []any `json:"upcomingPromotionalOffers"`
+					} `json:"promotions"`
+				} `json:"elements"`
+				Paging struct {
+					Count int `json:"count"`
+					Total int `json:"total"`
+				} `json:"paging"`
+			} `json:"searchStore"`
+		} `json:"Catalog"`
+	} `json:"data"`
+}
+
+type EpicResult struct {
+	Title     string
+	Kind      string
+	KindTxt   string
+	Body      string
+	StartDate time.Time
+	EndDate   time.Time
+}
+
+// Epic Games Stroe 무료 게임 배포 일정 crawl 함수
+func EpicCrawl(url string) ([]EpicResult, error) {
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	resp, err := client.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("error calling http.Get: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// resp body의 json을 담을 구조체 선언
+	var epicJSON EpicJSON
+
+	// 디코딩
+	decoder := json.NewDecoder(resp.Body)
+	if err := decoder.Decode(&epicJSON); err != nil {
+		return nil, fmt.Errorf("error decoding resp body: %w", err)
+	}
+
+	// json data 항목안에 들어있는 데이터들 모아서 담을 구조체 선언
+	var result []EpicResult
+
+	for _, element := range epicJSON.Data.Catalog.SearchStore.Elements {
+		result = append(result, EpicResult{
+			Title:     element.Title,
+			Kind:      "epic",
+			KindTxt:   "epic",
+			Body:      element.Description,
+			StartDate: element.Promotions.PromotionalOffers[0].PromotionalOffers[0].StartDate,
+			EndDate:   element.Promotions.PromotionalOffers[0].PromotionalOffers[0].EndDate,
+		})
+	}
+
+	return result, nil
 }
