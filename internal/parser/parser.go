@@ -11,11 +11,12 @@ import (
 	"github.com/paokimsiwoong/game_event_tracker/internal/crawler"
 )
 
-func Parse(opt string, input []crawler.PokeSVResult) ([]PokeSVParsedResult, error) {
+func Parse(opt string, input crawler.Result) ([]PokeSVParsedResult, error) {
 	switch opt {
 	case "pokesv":
-		return PokeParse(input)
-	// case "epic":
+		return PokeParse(input.PokeResult)
+	case "epic":
+		return EpicParse(input.EpicResult)
 	default:
 		return nil, errors.New("parse function for provided opt not yet implemented")
 	}
@@ -167,6 +168,31 @@ func PokeParse(input []crawler.PokeSVResult) ([]PokeSVParsedResult, error) {
 			t = time.Date(year, time.Month(month), day, hour, min, 0, 0, loc)
 
 			o.EndsAt = append(o.EndsAt, t)
+		}
+
+		output = append(output, o)
+	}
+
+	return output, nil
+}
+
+// Epic Games Store에서 불러온 데이터를 정리하는 파싱함수
+func EpicParse(input []crawler.EpicResult) ([]PokeSVParsedResult, error) {
+	// 결과 담을 슬라이스 선언
+	var output []PokeSVParsedResult
+
+	for _, i := range input {
+		// i.Kind의 string을 int로 변환
+		kind, _ := strconv.Atoi(i.Kind)
+
+		o := PokeSVParsedResult{
+			Title:    i.Title,
+			Kind:     kind,
+			KindTxt:  i.KindTxt,
+			Body:     i.Body,
+			PostedAt: i.StartDate.AddDate(0, 0, -7),
+			StartsAt: []time.Time{i.StartDate},
+			EndsAt:   []time.Time{i.EndDate},
 		}
 
 		output = append(output, o)

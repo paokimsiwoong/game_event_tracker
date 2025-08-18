@@ -308,7 +308,16 @@ type EpicJSON struct {
 								} `json:"discountSetting"`
 							} `json:"promotionalOffers"`
 						} `json:"promotionalOffers"`
-						UpcomingPromotionalOffers []any `json:"upcomingPromotionalOffers"`
+						UpcomingPromotionalOffers []struct {
+							PromotionalOffers []struct {
+								StartDate       time.Time `json:"startDate"`
+								EndDate         time.Time `json:"endDate"`
+								DiscountSetting struct {
+									DiscountType       string `json:"discountType"`
+									DiscountPercentage int    `json:"discountPercentage"`
+								} `json:"discountSetting"`
+							} `json:"promotionalOffers"`
+						} `json:"upcomingPromotionalOffers"`
 					} `json:"promotions"`
 				} `json:"elements"`
 				Paging struct {
@@ -354,10 +363,33 @@ func EpicCrawl(url string) ([]EpicResult, error) {
 	var result []EpicResult
 
 	for _, element := range epicJSON.Data.Catalog.SearchStore.Elements {
+		if len(element.Promotions.PromotionalOffers) == 0 && len(element.Promotions.UpcomingPromotionalOffers) == 0 {
+			continue
+		}
+
+		// if element.Price.TotalPrice.DiscountPrice != 0 {
+		// 	// 가격 0원 확인
+		// 	continue
+		// }
+		// @@@ 무료 배포가 아직 진행되기 전인 경우 discount price가 0이 아니다
+
+		if len(element.Promotions.PromotionalOffers) == 0 && len(element.Promotions.UpcomingPromotionalOffers) != 0 {
+			// upcoming 처리
+			result = append(result, EpicResult{
+				Title:     element.Title,
+				Kind:      "999",
+				KindTxt:   "에픽 무료 배포",
+				Body:      element.Description,
+				StartDate: element.Promotions.UpcomingPromotionalOffers[0].PromotionalOffers[0].StartDate,
+				EndDate:   element.Promotions.UpcomingPromotionalOffers[0].PromotionalOffers[0].EndDate,
+			})
+			continue
+		}
+
 		result = append(result, EpicResult{
 			Title:     element.Title,
-			Kind:      "epic",
-			KindTxt:   "epic",
+			Kind:      "999",
+			KindTxt:   "에픽 무료 배포",
 			Body:      element.Description,
 			StartDate: element.Promotions.PromotionalOffers[0].PromotionalOffers[0].StartDate,
 			EndDate:   element.Promotions.PromotionalOffers[0].PromotionalOffers[0].EndDate,
