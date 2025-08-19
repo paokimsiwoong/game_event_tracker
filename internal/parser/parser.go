@@ -190,6 +190,7 @@ func EpicParse(input []crawler.EpicResult) ([]PokeSVParsedResult, error) {
 			Kind:     kind,
 			KindTxt:  i.KindTxt,
 			Body:     i.Body,
+			Url:      i.Url,
 			PostedAt: i.StartDate.AddDate(0, 0, -7),
 			StartsAt: []time.Time{i.StartDate},
 			EndsAt:   []time.Time{i.EndDate},

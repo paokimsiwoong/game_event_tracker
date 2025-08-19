@@ -300,32 +300,32 @@ func AddEventWithReminds(srv *calendar.Service, calendarID string, data *Event) 
 	// srv.Events.Insert 호출 후 반환되는 event안에는 id 부분이 생성되어 있음
 	data.EventCalIDs = append(data.EventCalIDs, event.Id)
 
-	// 시작 리마인드 추가
-	startRemind := data.StartsAt.Time.Add(time.Hour).Format(time.RFC3339)
+	// // 시작 리마인드 추가
+	// startRemind := data.StartsAt.Time.Add(time.Hour).Format(time.RFC3339)
 
-	eventStart := &calendar.Event{
-		Summary:     "Remind Start:" + name,
-		Location:    "서울",
-		Description: desc,
-		Start: &calendar.EventDateTime{
-			DateTime: start,
-			TimeZone: "Asia/Seoul",
-		},
-		End: &calendar.EventDateTime{
-			DateTime: startRemind,
-			TimeZone: "Asia/Seoul",
-		},
-	}
+	// eventStart := &calendar.Event{
+	// 	Summary:     "Remind Start:" + name,
+	// 	Location:    "서울",
+	// 	Description: desc,
+	// 	Start: &calendar.EventDateTime{
+	// 		DateTime: start,
+	// 		TimeZone: "Asia/Seoul",
+	// 	},
+	// 	End: &calendar.EventDateTime{
+	// 		DateTime: startRemind,
+	// 		TimeZone: "Asia/Seoul",
+	// 	},
+	// }
 
-	eventStart, err = srv.Events.Insert(calendarID, eventStart).Do()
-	if err != nil {
-		// log.Fatalf("일정 생성 실패: %v", err)
-		return fmt.Errorf("일정 생성 실패: %v", err)
-	}
-	fmt.Printf("이벤트 생성됨: %s\n", eventStart.HtmlLink)
+	// eventStart, err = srv.Events.Insert(calendarID, eventStart).Do()
+	// if err != nil {
+	// 	// log.Fatalf("일정 생성 실패: %v", err)
+	// 	return fmt.Errorf("일정 생성 실패: %v", err)
+	// }
+	// fmt.Printf("이벤트 생성됨: %s\n", eventStart.HtmlLink)
 
-	// srv.Events.Insert 호출 후 반환되는 event안에는 id 부분이 생성되어 있음
-	data.EventCalIDs = append(data.EventCalIDs, eventStart.Id)
+	// // srv.Events.Insert 호출 후 반환되는 event안에는 id 부분이 생성되어 있음
+	// data.EventCalIDs = append(data.EventCalIDs, eventStart.Id)
 
 	// 중간 리마인드 추가
 	middle := data.EndsAt.Time.Sub(data.StartsAt.Time) / 2 // time.Duration은 내부적으로 int64에 나노초 단위를 저장하는 방식 -> 연산자 적용 가능

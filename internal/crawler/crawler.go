@@ -334,9 +334,12 @@ type EpicResult struct {
 	Kind      string
 	KindTxt   string
 	Body      string
+	Url       string
 	StartDate time.Time
 	EndDate   time.Time
 }
+
+const epicURL = "https://store.epicgames.com/ko/p/"
 
 // Epic Games Stroe 무료 게임 배포 일정 crawl 함수
 func EpicCrawl(url string) ([]EpicResult, error) {
@@ -373,6 +376,8 @@ func EpicCrawl(url string) ([]EpicResult, error) {
 		// }
 		// @@@ 무료 배포가 아직 진행되기 전인 경우 discount price가 0이 아니다
 
+		url := epicURL + element.OfferMappings[0].PageSlug
+
 		if len(element.Promotions.PromotionalOffers) == 0 && len(element.Promotions.UpcomingPromotionalOffers) != 0 {
 			// upcoming 처리
 			result = append(result, EpicResult{
@@ -380,6 +385,7 @@ func EpicCrawl(url string) ([]EpicResult, error) {
 				Kind:      "999",
 				KindTxt:   "에픽 무료 배포",
 				Body:      element.Description,
+				Url:       url,
 				StartDate: element.Promotions.UpcomingPromotionalOffers[0].PromotionalOffers[0].StartDate,
 				EndDate:   element.Promotions.UpcomingPromotionalOffers[0].PromotionalOffers[0].EndDate,
 			})
@@ -391,6 +397,7 @@ func EpicCrawl(url string) ([]EpicResult, error) {
 			Kind:      "999",
 			KindTxt:   "에픽 무료 배포",
 			Body:      element.Description,
+			Url:       url,
 			StartDate: element.Promotions.PromotionalOffers[0].PromotionalOffers[0].StartDate,
 			EndDate:   element.Promotions.PromotionalOffers[0].PromotionalOffers[0].EndDate,
 		})

@@ -275,5 +275,7 @@ go build -o <app_name>
 
 ## TODO
 - [ ] https://sv-news.pokemon.co.jp/ko/page/373.html, https://sv-news.pokemon.co.jp/ko/page/370.html 과 같이 한 게시글에 테라레이드 기간과 이후의 이상한 소포 선물 기간이 같이 있는 경우 이상한 소포 선물 기간의 tag와 tag text가 1, 테라 레이드배틀이 되는 문제 해결?
-- [ ] 에픽게임즈 스토어 무료게임 공지
+- [X] 에픽게임즈 스토어 무료게임 공지
 - [ ] HELP 명령어 추가
+- [ ] Remind 일정에는 본 일정 기간을 description에 추가하기
+- [ ] 확인이 끝난 일정을 체크하고, 체크한 일정만 events 테이블과 calendar에서 삭제하는 기능 추가
