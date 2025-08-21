@@ -335,7 +335,7 @@ func AddEventWithReminds(srv *calendar.Service, calendarID string, data *Event) 
 	eventMiddle := &calendar.Event{
 		Summary:     "Remind Middle:" + name,
 		Location:    "서울",
-		Description: desc,
+		Description: desc + "기간: " + start + " ~ " + end + "\n",
 		Start: &calendar.EventDateTime{
 			DateTime: middleRemind,
 			TimeZone: "Asia/Seoul",
@@ -362,7 +362,7 @@ func AddEventWithReminds(srv *calendar.Service, calendarID string, data *Event) 
 	eventEnd := &calendar.Event{
 		Summary:     "Remind End:" + name,
 		Location:    "서울",
-		Description: desc,
+		Description: desc + "기간: " + start + " ~ " + end + "\n",
 		Start: &calendar.EventDateTime{
 			DateTime: endRemind,
 			TimeZone: "Asia/Seoul",
@@ -412,7 +412,7 @@ func AddOnlyReminds(srv *calendar.Service, calendarID string, data *Event) error
 	eventStart := &calendar.Event{
 		Summary:     "Remind Start:" + name,
 		Location:    "서울",
-		Description: desc,
+		Description: desc + "기간: " + start + " ~ " + end + "\n",
 		Start: &calendar.EventDateTime{
 			DateTime: start,
 			TimeZone: "Asia/Seoul",
@@ -441,7 +441,7 @@ func AddOnlyReminds(srv *calendar.Service, calendarID string, data *Event) error
 	eventMiddle := &calendar.Event{
 		Summary:     "Remind Middle:" + name,
 		Location:    "서울",
-		Description: desc,
+		Description: desc + "기간: " + start + " ~ " + end + "\n",
 		Start: &calendar.EventDateTime{
 			DateTime: middleRemind,
 			TimeZone: "Asia/Seoul",
@@ -468,7 +468,7 @@ func AddOnlyReminds(srv *calendar.Service, calendarID string, data *Event) error
 	eventEnd := &calendar.Event{
 		Summary:     "Remind End:" + name,
 		Location:    "서울",
-		Description: desc,
+		Description: desc + "기간: " + start + " ~ " + end + "\n",
 		Start: &calendar.EventDateTime{
 			DateTime: endRemind,
 			TimeZone: "Asia/Seoul",

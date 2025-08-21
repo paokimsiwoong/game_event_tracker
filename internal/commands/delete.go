@@ -7,6 +7,7 @@ import (
 	"slices"
 
 	"github.com/paokimsiwoong/game_event_tracker/internal/calendar"
+	"google.golang.org/api/googleapi"
 )
 
 // "delete" command 입력 시 실행되는 함수
@@ -166,6 +167,11 @@ func HandlerDelete(s *State, cmd Command) error {
 				if check {
 					err = calendar.DeleteEvent(s.PtrCalSrv, s.PtrCfg.CalendarID, eventCalID)
 					if err != nil {
+						if googleAPIErr, ok := err.(*googleapi.Error); ok && googleAPIErr.Code == 410 {
+							// @@@ 이미 지워진 일정이어도 CheckEvent는 통과하는 상황이라 예외처리 필요
+							fmt.Printf("The event %v has been deleted: %v\n", eventCalID, err)
+							continue
+						}
 						fmt.Printf("Failed to delete the event %v in Google Calendar: %v\n", eventCalID, err)
 						continue
 					}
