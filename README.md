@@ -279,3 +279,4 @@ go build -o <app_name>
 - [ ] HELP 명령어 추가
 - [X] Remind 일정에는 본 일정 기간을 description에 추가하기
 - [ ] 확인이 끝난 일정을 체크하고, 체크한 일정만 events 테이블과 calendar에서 삭제하는 기능 추가
+    - [ ] event를 지울 때, 그 이벤트와 연관 있는 post들 같이 삭제하는 옵션 추가

@@ -32,7 +32,8 @@ func HandlerPosts(s *State, cmd Command) error {
 		for _, post := range posts {
 			if post.EndsAt.Valid {
 				fmt.Printf(
-					"Name: %s\nCreated at: %v\nPosted at: %v\nTag: %v\nTag text: %v\nStarts at: %v\nEnds at: %v\nPost url: %v\nSite name: %v\nSite url: %v\n",
+					"ID: %s\nName: %s\nCreated at: %v\nPosted at: %v\nTag: %v\nTag text: %v\nStarts at: %v\nEnds at: %v\nPost url: %v\nSite name: %v\nSite url: %v\n",
+					post.ID,
 					post.Name,
 					post.CreatedAt,
 					post.PostedAt,
@@ -46,7 +47,8 @@ func HandlerPosts(s *State, cmd Command) error {
 				)
 			} else {
 				fmt.Printf(
-					"Name: %s\nCreated at: %v\nPosted at: %v\nTag: %v\nTag text: %v\nStarts at: %v\nEnds at: permanent\nPost url: %v\nSite name: %v\nSite url: %v\n",
+					"ID: %s\nName: %s\nCreated at: %v\nPosted at: %v\nTag: %v\nTag text: %v\nStarts at: %v\nEnds at: permanent\nPost url: %v\nSite name: %v\nSite url: %v\n",
+					post.ID,
 					post.Name,
 					post.CreatedAt,
 					post.PostedAt,
@@ -86,7 +88,8 @@ func HandlerPosts(s *State, cmd Command) error {
 		for _, post := range posts {
 			if post.EndsAt.Valid {
 				fmt.Printf(
-					"Name: %s\nCreated at: %v\nPosted at: %v\nTag: %v\nTag text: %v\nStarts at: %v\nEnds at: %v\nPost url: %v\nSite name: %v\nSite url: %v\n",
+					"ID: %s\nName: %s\nCreated at: %v\nPosted at: %v\nTag: %v\nTag text: %v\nStarts at: %v\nEnds at: %v\nPost url: %v\nSite name: %v\nSite url: %v\n",
+					post.ID,
 					post.Name,
 					post.CreatedAt,
 					post.PostedAt,
@@ -100,7 +103,8 @@ func HandlerPosts(s *State, cmd Command) error {
 				)
 			} else {
 				fmt.Printf(
-					"Name: %s\nCreated at: %v\nPosted at: %v\nTag: %v\nTag text: %v\nStarts at: %v\nEnds at: permanent\nPost url: %v\nSite name: %v\nSite url: %v\n",
+					"ID: %s\nName: %s\nCreated at: %v\nPosted at: %v\nTag: %v\nTag text: %v\nStarts at: %v\nEnds at: permanent\nPost url: %v\nSite name: %v\nSite url: %v\n",
+					post.ID,
 					post.Name,
 					post.CreatedAt,
 					post.PostedAt,
@@ -139,7 +143,8 @@ func HandlerPosts(s *State, cmd Command) error {
 		for _, post := range posts {
 			if post.EndsAt.Valid {
 				fmt.Printf(
-					"Name: %s\nCreated at: %v\nPosted at: %v\nTag: %v\nTag text: %v\nStarts at: %v\nEnds at: %v\nPost url: %v\nSite name: %v\nSite url: %v\n",
+					"ID: %s\nName: %s\nCreated at: %v\nPosted at: %v\nTag: %v\nTag text: %v\nStarts at: %v\nEnds at: %v\nPost url: %v\nSite name: %v\nSite url: %v\n",
+					post.ID,
 					post.Name,
 					post.CreatedAt,
 					post.PostedAt,
@@ -153,7 +158,8 @@ func HandlerPosts(s *State, cmd Command) error {
 				)
 			} else {
 				fmt.Printf(
-					"Name: %s\nCreated at: %v\nPosted at: %v\nTag: %v\nTag text: %v\nStarts at: %v\nEnds at: permanent\nPost url: %v\nSite name: %v\nSite url: %v\n",
+					"ID: %s\nName: %s\nCreated at: %v\nPosted at: %v\nTag: %v\nTag text: %v\nStarts at: %v\nEnds at: permanent\nPost url: %v\nSite name: %v\nSite url: %v\n",
+					post.ID,
 					post.Name,
 					post.CreatedAt,
 					post.PostedAt,
@@ -200,7 +206,8 @@ func HandlerPosts(s *State, cmd Command) error {
 
 		for _, post := range posts {
 			fmt.Printf(
-				"Name: %s\nCreated at: %v\nPosted at: %v\nTag: %v\nTag text: %v\nStarts at: %v\n",
+				"ID: %s\nName: %s\nCreated at: %v\nPosted at: %v\nTag: %v\nTag text: %v\nStarts at: %v\n",
+				post.ID,
 				post.Name,
 				post.CreatedAt,
 				post.PostedAt,
