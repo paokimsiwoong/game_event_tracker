@@ -59,6 +59,7 @@ func main() {
 	}
 
 	//  command 등록
+	cmds.Register("help", commands.HandlerHelp)
 	cmds.Register("sites", commands.HandlerSites)
 	cmds.Register("addsite", commands.HandlerAddSite)
 	cmds.Register("delete", commands.HandlerDelete)
@@ -67,15 +68,22 @@ func main() {
 	cmds.Register("events", commands.HandlerEvents)
 	cmds.Register("calendar", commands.HandlerCalendar)
 
+	var cmd commands.Command
+
 	// 유저 명령어 입력 확인
 	if len(os.Args) < 2 {
 		// os.Args의 첫번째 arg는 무조건 프로그램 이름이므로 명령어가 포함되어 있으려면 길이가 2 이상이어야 한다
-		log.Fatal("error checking arguments : not enough arguments were provided")
-	}
-	// 유저 명령어 command 구조체에 저장
-	cmd := commands.Command{
-		Name: os.Args[1], // 0은 프로그램 이름, 1은 명령어 이름
-		Args: os.Args[2:],
+		// log.Fatal("error checking arguments : not enough arguments were provided")
+		// @@@ log.Fatal 대신 help 명령어 대신 실행으로 변경
+		cmd = commands.Command{
+			Name: "help", // 0은 프로그램 이름, 1은 명령어 이름
+		}
+	} else {
+		// 유저 명령어 command 구조체에 저장
+		cmd = commands.Command{
+			Name: os.Args[1], // 0은 프로그램 이름, 1은 명령어 이름
+			Args: os.Args[2:],
+		}
 	}
 
 	// 명령어 실행

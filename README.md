@@ -190,7 +190,7 @@ TOKEN_FILE_PATH="로컬 OAuth 2.0 액세스 토큰 절대경로"
 #### 7-1. 프로그램 최초 실행
 ```bash
 # 프로젝트 루트 폴더에서 실행
-go run ./cmd sites
+go run ./cmd
 ```
 * #### 실행하면 `브라우저에서 URL을 열고 인증코드를 입력하세요:`과 `https://accounts.google.com/o/oauth2/auth?access_type=offline&client_id=.....` 형태의 url이 출력되고 사용자의 인증코드 입력을 기다린다
 #### 7-2. 표시된 url에 접속
@@ -220,12 +220,14 @@ go build -o <app_name>
 ```
 
 ### 명령어
+#### `help`
+* #### 프로그램 사용법 출력
 #### `sites`
 * #### `sites` 테이블에 저장된 크롤 가능한 사이트 리스트. `Name`에 표시된 값을 `crawl` 명령어에 사용
 #### `crawl`
 * #### 주어진 기간 내에 게시된 이벤트 공지 글을 받아 `posts` 테이블에 데이터를 저장
-* #### `crawl <site name> <duration>`
-    * #### `<site name>`: 현재 `pokesv` 또는 `epic` 가능
+* #### `crawl <siteName> <duration>`과 같은 형태로 크롤링할 사이트 이름과 기간을 같이 입력
+    * #### `<siteName>`: 현재 `pokesv` 또는 `epic` 가능
     * #### `<duration>`: 정수로 크롤링 일수 입력
 #### `posts`
 * #### 저장된 이벤트 게시글 전부를 리스트로 출력
@@ -239,8 +241,9 @@ go build -o <app_name>
 #### `events`
 * #### 이벤트의 종류, 진행 기간 등을 담은 `events` 테이블의 데이터들을 리스트로 출력
     * #### `posts`는 동일한 이벤트에 대한 공지를 여러번 게시한 경우 그 중복 공지들이 전부 표시되지만, `events`는 중복 게시된 이벤트여도 한번만 표시
-* #### `events r`, `events -r`, `events register`, `events -register`
-    * #### `posts` 테이블의 데이터들을 `events` 테이블에 입력한 후 리스트 출력
+* #### 추가 옵션
+    * #### `r`, `-r`, `register`, `-register`
+        * #### `posts` 테이블의 데이터들을 `events` 테이블에 입력한 후 리스트 출력
 #### `calendar`
 * #### `events` 테이블에 저장된 이벤트들을 구글 캘린더에 입력
 * #### 추가 옵션
@@ -260,9 +263,9 @@ go build -o <app_name>
     * #### `site`
         * #### `sites` 테이블에 저장된 데이터를 삭제. `post`나 `event`와 다르게 전체 삭제 기능 없음
         * #### `site` 필수 옵션
-            * #### `name 사이트_이름` 또는 `n 사이트_이름`
+            * #### `name siteName` 또는 `n siteName`
                 * #### 이름으로 지정된 사이트 삭제
-            * #### `url 사이트_이름` 또는 `u 사이트_이름`
+            * #### `url siteURL` 또는 `u siteURL`
                 * #### url로 지정된 사이트 삭제
     * #### `post`
         * #### `posts` 테이블에 저장된 데이터를 삭제
@@ -280,9 +283,10 @@ go build -o <app_name>
         * #### `event` 추가 옵션
             * #### `id <postUUID>`, `ID <postUUID>`
                 * #### 해당 `UUID`를 가지는 `event`를 `events` 테이블에서 삭제하고 구글 캘린더에서도 삭제
-#### `addsite <siteName> <siteURL>`
+#### `addsite`
 * #### `sites` 테이블에 데이터를 추가하는 명령어
-* #### `addsite`로 추가한 뒤, `internal/crawler/crawler.go`에 해당 사이트 크롤링 함수를 추가해야 `crawl` 명령어에서 추가한 사이트로 크롤링 가능
+    * #### `addsite`로 추가한 뒤, `internal/crawler/crawler.go`와 `internal/parser/parser.go`에 해당 사이트 크롤링, 파싱 함수를 추가해야 `crawl` 명령어에서 추가한 사이트로 크롤링 가능
+* #### `addsite <siteName> <siteURL>`과 같은 형태로 사이트 이름과 사이트 url 입력
 
 
 </div>
@@ -292,7 +296,7 @@ go build -o <app_name>
 ## TODO
 - [ ] https://sv-news.pokemon.co.jp/ko/page/373.html, https://sv-news.pokemon.co.jp/ko/page/370.html 과 같이 한 게시글에 테라레이드 기간과 이후의 이상한 소포 선물 기간이 같이 있는 경우 이상한 소포 선물 기간의 tag와 tag text가 1, 테라 레이드배틀이 되는 문제 해결?
 - [X] 에픽게임즈 스토어 무료게임 공지
-- [ ] HELP 명령어 추가
+- [X] HELP 명령어 추가
 - [X] Remind 일정에는 본 일정 기간을 description에 추가하기
 - [ ] 확인이 끝난 일정을 체크하고, 체크한 일정만 events 테이블과 calendar에서 삭제하는 기능 추가
     - [ ] event를 지울 때, 그 이벤트와 연관 있는 post들 같이 삭제하는 옵션 추가
