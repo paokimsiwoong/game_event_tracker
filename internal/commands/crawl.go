@@ -21,26 +21,62 @@ func HandlerCrawl(s *State, cmd Command) error {
 		return errors.New("the crawl handler expects two arguments, crawl site name and crawl duration in days")
 	}
 
-	site, err := s.PtrDB.GetSiteByName(context.Background(), cmd.Args[0])
-	if err != nil {
-		return fmt.Errorf("error crawling site: site with the provided name not found: %w", err)
-	}
-
-	// @@@ 현재는 포켓몬 스/바 이벤트 일정 crawl, parse 함수 밖에 없음
-	duration, err := strconv.Atoi(cmd.Args[1])
-	if err != nil {
-		return fmt.Errorf("error crawling site: invalid crawl duration: %w", err)
-	}
-	crawled, err := crawler.Crawl(cmd.Args[0], site.Url, duration)
-	if err != nil {
-		return fmt.Errorf("error crawling site: failed to crawl: %w", err)
-	}
-	parsed, err := parser.Parse(cmd.Args[0], crawled)
-	if err != nil {
-		return fmt.Errorf("error crawling site: failed to parse: %w", err)
-	}
-
 	var count int
+
+	if cmd.Args[0] == "all" {
+		// all 일 경우 모든 사이트 크롤링 진행
+		sites, err := s.PtrDB.GetSites(context.Background())
+		if err != nil {
+			return fmt.Errorf("error crawling site: %w", err)
+		}
+		duration, err := strconv.Atoi(cmd.Args[1])
+		if err != nil {
+			return fmt.Errorf("error crawling site: invalid crawl duration: %w", err)
+		}
+
+		for _, site := range sites {
+			c, err := crawlAndParse(s, cmd, site, duration)
+			if err != nil {
+				return err
+			}
+			count += c
+		}
+
+	} else {
+		site, err := s.PtrDB.GetSiteByName(context.Background(), cmd.Args[0])
+		if err != nil {
+			return fmt.Errorf("error crawling site: site with the provided name not found: %w", err)
+		}
+
+		// @@@ 현재는 포켓몬 스/바 이벤트 일정 crawl, parse 함수 밖에 없음
+		duration, err := strconv.Atoi(cmd.Args[1])
+		if err != nil {
+			return fmt.Errorf("error crawling site: invalid crawl duration: %w", err)
+		}
+
+		c, err := crawlAndParse(s, cmd, site, duration)
+		if err != nil {
+			return err
+		}
+		count += c
+	}
+
+	log.Printf("Total %d posts have been registered", count)
+
+	return nil
+}
+
+func crawlAndParse(s *State, cmd Command, site database.Site, duration int) (int, error) {
+	var count int
+
+	crawled, err := crawler.Crawl(site.Name, site.Url, duration)
+	if err != nil {
+		return 0, fmt.Errorf("error crawling site: failed to crawl: %w", err)
+	}
+	parsed, err := parser.Parse(site.Name, crawled)
+	if err != nil {
+		return 0, fmt.Errorf("error crawling site: failed to parse: %w", err)
+	}
 
 	for _, p := range parsed {
 		if posts, err := s.PtrDB.GetPostsByNameAndPostedAtAndSiteID(context.Background(), database.GetPostsByNameAndPostedAtAndSiteIDParams{
@@ -81,7 +117,7 @@ func HandlerCrawl(s *State, cmd Command) error {
 					SiteID:  site.ID,
 				})
 				if err != nil {
-					return fmt.Errorf("error creating a post: %w", err)
+					return 0, fmt.Errorf("error creating a post: %w", err)
 				}
 			} else { // @@@ 종료시점 없는 경우 처리해야함
 				_, err = s.PtrDB.CreatePost(context.Background(), database.CreatePostParams{
@@ -104,17 +140,14 @@ func HandlerCrawl(s *State, cmd Command) error {
 					SiteID:  site.ID,
 				})
 				if err != nil {
-					return fmt.Errorf("error creating a post: %w", err)
+					return 0, fmt.Errorf("error creating a post: %w", err)
 				}
 			}
 
 		}
 
 	}
-
-	log.Printf("Total %d posts have been registered", count)
-
 	s.PtrDB.MarkSiteFetched(context.Background(), site.ID)
 
-	return nil
+	return count, nil
 }

@@ -102,35 +102,26 @@ func (q *Queries) GetSiteByURL(ctx context.Context, url string) (Site, error) {
 }
 
 const getSites = `-- name: GetSites :many
-SELECT sites.id, sites.name, sites.created_at, sites.updated_at, sites.last_fetched_at, sites.url
+SELECT id, created_at, updated_at, last_fetched_at, name, url
 FROM sites
 ORDER BY sites.updated_at
 `
 
-type GetSitesRow struct {
-	ID            pgtype.UUID
-	Name          string
-	CreatedAt     pgtype.Timestamp
-	UpdatedAt     pgtype.Timestamp
-	LastFetchedAt pgtype.Timestamp
-	Url           string
-}
-
-func (q *Queries) GetSites(ctx context.Context) ([]GetSitesRow, error) {
+func (q *Queries) GetSites(ctx context.Context) ([]Site, error) {
 	rows, err := q.db.Query(ctx, getSites)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetSitesRow
+	var items []Site
 	for rows.Next() {
-		var i GetSitesRow
+		var i Site
 		if err := rows.Scan(
 			&i.ID,
-			&i.Name,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.LastFetchedAt,
+			&i.Name,
 			&i.Url,
 		); err != nil {
 			return nil, err

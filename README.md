@@ -238,7 +238,7 @@ getker <commmand name> <argument1> <argument2> ...
 #### `crawl`
 * #### 주어진 기간 내에 게시된 이벤트 공지 글을 받아 `posts` 테이블에 데이터를 저장
 * #### `crawl <siteName> <duration>`과 같은 형태로 크롤링할 사이트 이름과 기간을 같이 입력
-    * #### `<siteName>`: 현재 `pokesv` 또는 `epic` 가능
+    * #### `<siteName>`: 현재 `pokesv`, `epic`, `all` 가능
     * #### `<duration>`: 정수로 크롤링 일수 입력
 #### `posts`
 * #### 저장된 이벤트 게시글 전부를 리스트로 출력

@@ -19,7 +19,7 @@ SELECT * FROM sites
 WHERE url = $1;
 
 -- name: GetSites :many
-SELECT sites.id, sites.name, sites.created_at, sites.updated_at, sites.last_fetched_at, sites.url
+SELECT *
 FROM sites
 ORDER BY sites.updated_at;
 
