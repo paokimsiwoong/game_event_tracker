@@ -1,4 +1,4 @@
-.env
+.getker_env
 temp*.txt
 tester.go
 tester2.go

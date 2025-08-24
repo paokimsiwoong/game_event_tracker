@@ -8,7 +8,7 @@
 
 ```
 game-event-calendar/
-├── cmd/
+├── getker/
 │   └── main.go            // 엔트리 포인트
 ├── internal/
 │   ├── commands/          // CLI 명령어 기능
@@ -48,8 +48,8 @@ game-event-calendar/
 ├── go.mod
 ├── go.sum
 ├── .gitignore
-├── .env                   // 필요 설정 값 저장
-├── .env_example
+├── .getker_env                   // 필요 설정 값 저장
+├── .getker_env_example
 └── README.md
 ```
 
@@ -172,25 +172,25 @@ goose postgres <connection_string> up
 </div>
 </details>
 
-### 6. .env 파일 설정
-#### 6-1. 프로젝트 폴더 루트 경로(.env_example이 존재하는 경로)에 .env 파일 생성
-#### 6-2. .env_example 을 참고하며 .env 내용 작성
+### 6. .getker_env 파일 설정
+#### 6-1. 프로젝트 폴더 루트 경로(.getker_env_example이 존재하는 경로)에 .getker_env 파일 생성
+#### 6-2. .getker_env_example 을 참고하며 .getker_env 내용 작성
 ```bash
 # db connection string
 DB_URL="postgres://<username>:<password>@localhost:5432/<dbname>?sslmode=disable"
 # 일정을 업로드할 캘린더 id (기본값 primary를 쓰면 로그인한 사용자의 기본 캘린더에 일정이 업로드)
 CALENDAR_ID = "primary"
 # 5. 에서 생성한 Google Cloud Console 사용자 인증 정보 json 파일 위치
-CLIENT_SECRET_FILE_PATH="OAuth 2.0 클라이언트 인증 정보 json 절대경로"
+CLIENT_SECRET_FILE_PATH="OAuth 2.0 클라이언트 인증 정보 json 절대경로 또는 실행파일 기준 상대경로"
 # OAuth 2.0 인증 과정에서 생성되고 사용될 액세스 토큰 저장 위치
-TOKEN_FILE_PATH="로컬 OAuth 2.0 액세스 토큰 절대경로"
+TOKEN_FILE_PATH="로컬 OAuth 2.0 액세스 토큰 절대경로 또는 실행파일 기준 상대경로"
 ```
 
 ### 7. 로컬 액세스 토큰 생성
 #### 7-1. 프로그램 최초 실행
 ```bash
 # 프로젝트 루트 폴더에서 실행
-go run ./cmd
+go run ./getker
 ```
 * #### 실행하면 `브라우저에서 URL을 열고 인증코드를 입력하세요:`과 `https://accounts.google.com/o/oauth2/auth?access_type=offline&client_id=.....` 형태의 url이 출력되고 사용자의 인증코드 입력을 기다린다
 #### 7-2. 표시된 url에 접속
@@ -210,13 +210,24 @@ go run ./cmd
 
 ```bash
 # build 없이 사용할 경우
-go run ./cmd <commmand name> <argument1> <argument2> ...
+go run ./getker <commmand name> <argument1> <argument2> ...
 ```
 ```bash
 # build
-go build -o <app_name>
+go build -o <app_name> ./getker
 # 빌드 후 실행
-<app_name> <commmand name> <argument1> <argument2> ...
+./<app_name> <commmand name> <argument1> <argument2> ...
+```
+```bash
+# install
+go install ./getker
+
+# 환경변수 파일 .getker_env 파일을 홈경로/.myprogram에 복사
+mkdir -p "$HOME/.myprogram"
+cp .getker_env "$HOME/.myprogram/"
+
+# 실행
+getker <commmand name> <argument1> <argument2> ...
 ```
 
 ### 명령어
