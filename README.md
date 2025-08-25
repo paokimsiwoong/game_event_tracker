@@ -13,6 +13,7 @@ game-event-calendar/
 ├── internal/
 │   ├── commands/          // CLI 명령어 기능
 │   │   ├── commands.go
+│   │   ├── help.go
 │   │   ├── addsite.go
 │   │   ├── sites.go
 │   │   ├── crawl.go
@@ -31,7 +32,8 @@ game-event-calendar/
 │   │   ├── models.go
 │   │   ├── sites.sql.go
 │   │   ├── posts.sql.go
-│   │   └── evetns.sql.go
+│   │   ├── events.sql.go
+│   │   └── evetns_manual.sql.go
 │   └── config/            // 설정(토큰, URL 등) 관리
 │       └── config.go
 ├── sql/
