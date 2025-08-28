@@ -1,6 +1,6 @@
 # game_event_tracker
 ## 게임 이벤트 일정 캘린더 입력 프로젝트
-### 유저가 게임 이벤트 공지를 제공하는 url (ex:https://sv-news.pokemon.co.jp/ko/list => https://sv-news.pokemon.co.jp/ko/json/list.json) 을 입력하면 그 내용들을 긁어와서 일정이 적혀 있는 이벤트들을 구글 캘린더에 저장합니다.
+### Go, postgreSQL을 이용하는 프로젝트로 게임 이벤트 공지를 제공하는 사이트에서 (ex:https://sv-news.pokemon.co.jp/ko/list => https://sv-news.pokemon.co.jp/ko/json/list.json) 이벤트 일정 및 정보를 얻고 정리해 db에 저장한 뒤, db에 저장된 일정들을 구글 캘린더에 입력합니다.
 
 <details>
 <summary> <h2> 프로젝트 구조 </h2> </summary>
